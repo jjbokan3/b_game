@@ -4,7 +4,12 @@ OVERVIEW
 3. Those ratings are elongated to 0-100
 4. Those ratings are used as probabilities each attribute is good
 	a. Rating for a guy is 94 - very good chance that he is has good contact
-
+5. Randomly choose (or through weights) the order of attributes that get picked
+    a. e.g. Speed/stealing -> contact -> fielding -> power
+6. After each one, the players value goes down for the remaining attributes
+7. Weights on each attribute will differ
+    a. power being more important than speed
+8. Choosing whether hitters are l/r and whether they hit better against same side
 
 
 Thoughts
@@ -13,3 +18,4 @@ Thoughts
 3. What are the distributions in need?
 	a. ie should 80% of people be on the slower end and the 20% have an exceptionally higher speed?
 4. Use python classes?
+
