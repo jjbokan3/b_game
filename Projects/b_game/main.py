@@ -5,6 +5,15 @@ import random
 import names
 import pickle
 
+from sqlalchemy import create_engine
+from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy import Column, String, DateTime, Integer, JSON, Boolean, ForeignKey
+
+
+engine = create_engine('postgresql://jjbokan3:sEals091sands@localhost:5432/bgame_db', echo=True)
+Session = sessionmaker()
+Base = declarative_base()
+
 # Constants
 NUM_PLAYERS = 3000  # Number of players to create
 MEAN_MAIN_RATING = 70  # Mean rating for creation of main ratings
@@ -150,10 +159,10 @@ def create_player_df():
         np.around(np.random.normal(MEAN_MAIN_RATING, STD_MAIN_RATING, NUM_PLAYERS)),
         columns=["main_rating"],
     )
-    df_main['position'] = df_main.apply(lambda row: assign_parent_position(), axis=1)
-    df_main['sec_position'] = df_main.apply(lambda row: assign_position(row['position']), axis=1)
-    df_main["handed"] = df_main.apply(lambda row: assign_handed(row['position']), axis=1)
-    df_main["attributes"] = df_main.apply(lambda row: (assign_hitting_attributes(row['main_rating']) if row['position'] == 'hit' else assign_pitching_attributes(row['main_rating'])), axis=1)
+    df_main['parent_position'] = df_main.apply(lambda row: assign_parent_position(), axis=1)
+    df_main['position'] = df_main.apply(lambda row: assign_position(row['parent_position']), axis=1)
+    df_main["handed"] = df_main.apply(lambda row: assign_handed(row['parent_position']), axis=1)
+    df_main["attributes"] = df_main.apply(lambda row: (assign_hitting_attributes(row['main_rating']) if row['parent_position'] == 'B' else assign_pitching_attributes(row['main_rating'])), axis=1)
     df_main["name"] = df_main.apply(lambda row: names.get_full_name(gender="male"), axis=1)
     df_main.reset_index(inplace=True)
     df_main.rename(columns={
@@ -163,10 +172,20 @@ def create_player_df():
     return df_main
 
 
-class Player:
+class Player(Base):
 
-    def __init__(self, id: int, name: str, parent_position: str, position: str, main_rating: int, handed: str, attributes: dict, injured: bool = False):
-        self.id = id
+    __tablename__ = 'players'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(30), nullable=False)
+    parent_position = Column(String(2), nullable=False)
+    position = Column(String(2), nullable=False)
+    main_rating = Column(Integer, nullable=False)
+    handed = Column(String(5), nullable=False)
+    attributes = Column(JSON)
+    injured = Column(Boolean, nullable=False)
+    current_team = Column(Integer, ForeignKey('teams.id'), nullable=True)
+
+    def __init__(self, name: str, parent_position: str, position: str, main_rating: int, handed: str, attributes: dict, injured: bool, current_team: int):
         self.name = name
         self.main_rating = main_rating
         self.parent_position = parent_position
@@ -174,42 +193,64 @@ class Player:
         self.handed = handed
         self.attributes = attributes
         self.injured = injured
+        self.current_team = current_team
 
     def __str__(self):
-        return f"{self.name} ({self.id})"
+        return f"{self.name})"
 
     def __repr__(self):
-        return f"Player({self.id}, {self.name}, {self.position}, {self.main_rating}, {self.handed}, {self.attributes})"
+        return f"Player({self.name}, {self.position}, {self.main_rating}, {self.handed}, {self.attributes})"
 
 
 class Pitcher(Player):
 
-    def __init__(self, id, name, parent_position, position, main_rating, handed, attributes, injured, days_rest: int):
-        super().__init__(id, name, parent_position, position, main_rating, handed, attributes, injured)
+    __tablename__ = 'pitchers'
+    id = Column(Integer, ForeignKey('players.id'), primary_key=True)
+    days_rest = Column(Integer)
+
+    def __init__(self, name, parent_position, position, main_rating, handed, attributes, injured, current_team, days_rest: int):
+        super().__init__(name, parent_position, position, main_rating, handed, attributes, injured, current_team)
 
         self.days_rest = days_rest
 
 
 class Batter(Player):
 
-    def __init__(self, id, name, parent_position, position, main_rating, handed, attributes, injured):
-        super().__init__(id, name, parent_position, position, main_rating, handed, attributes, injured)
+    __tablename__ = 'batters'
+    id = Column(Integer, ForeignKey('players.id'), primary_key=True)
+    switch = Column(Boolean, nullable=True)
+
+    def __init__(self, name, parent_position, position, main_rating, handed, attributes, injured, current_team, switch):
+        super().__init__(name, parent_position, position, main_rating, handed, attributes, injured, current_team)
+
+        self.switch = switch
 
 
-class Team:
-    def __int__(self, name: str, city: str, league: str, players: list[Player], record: dict):
+class Team(Base):
+
+    __tablename__ = 'teams'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(50), nullable=False)
+    city = Column(String(50), nullable=False)
+    league = Column(Integer, ForeignKey('leagues.id'), nullable=True)
+    record = Column(String(10), nullable=False)
+
+    def __int__(self, name: str, city: str, league: int, record: dict):
         self.name = name
         self.city = city
         self.league = league
-        self.players = players
         self.record = record
 
     # def play(self, opp):
 
 
-class League:
-    def __init__(self, name: str, level: str, teams: list[Team]):
+class League(Base):
+
+    __tablename__ = 'leagues'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(50), nullable=False)
+    level = Column(String(20), nullable=False)
+
+    def __init__(self, name: str, level: str):
         self.name = name
         self.level = level
-        self.teams = teams
-
