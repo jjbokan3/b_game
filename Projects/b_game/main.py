@@ -3,14 +3,15 @@ import numpy as np
 import pandas as pd
 import random
 import names
+import collections
 import pickle
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
-from sqlalchemy import Column, String, DateTime, Integer, JSON, Boolean, ForeignKey
+from sqlalchemy import Column, String, DateTime, Integer, JSON, Boolean, ForeignKey, ARRAY
 
 
-engine = create_engine('postgresql://jjbokan3:sEals091sands@localhost:5432/bgame_db', echo=True)
+engine = create_engine('postgresql://jjbokan3:sEals091sands@localhost:5432/bgame_db')
 Session = sessionmaker()
 Base = declarative_base()
 
@@ -84,6 +85,26 @@ HANDED_PROB = {
     }
 }
 
+ma = {
+    'R/G': 4.53,
+    'PA': 37.43,
+    'AB': 33.33,
+    'R': 4.53,
+    'H': 8.13,
+    '1B': 5.15,
+    '2B': 1.62,
+    '3B': 0.14,
+    'HR': 1.22,
+    'RBI': 4.32,
+    'SB': 0.46,
+    'CS': 0.15,
+    'BB': 3.25,
+    'SO': 8.68,
+    'BA': .244,
+    'OBP': .317,
+    'SLG': .411,
+    'OPS': .728,
+}
 
 def assign_parent_position():
     return random.choices(list(PARENT_POSITION_PROB.keys()), list(PARENT_POSITION_PROB.values()))[0]
@@ -196,7 +217,7 @@ class Player(Base):
         self.current_team = current_team
 
     def __str__(self):
-        return f"{self.name})"
+        return f"{self.name}"
 
     def __repr__(self):
         return f"Player({self.name}, {self.position}, {self.main_rating}, {self.handed}, {self.attributes})"
@@ -207,11 +228,17 @@ class Pitcher(Player):
     __tablename__ = 'pitchers'
     id = Column(Integer, ForeignKey('players.id'), primary_key=True)
     days_rest = Column(Integer)
+    pitcher_priority = Column(Integer, nullable=True)
 
-    def __init__(self, name, parent_position, position, main_rating, handed, attributes, injured, current_team, days_rest: int):
+    def __init__(self, name, parent_position, position, main_rating, handed, attributes, injured, current_team, days_rest: int, pitcher_priority):
         super().__init__(name, parent_position, position, main_rating, handed, attributes, injured, current_team)
 
         self.days_rest = days_rest
+        self.pitcher_priority = pitcher_priority
+
+    def play(self, opp):
+        if isinstance(opp, Pitcher):
+            raise Exception('Cannot face two pitchers against each other!')
 
 
 class Batter(Player):
@@ -219,11 +246,19 @@ class Batter(Player):
     __tablename__ = 'batters'
     id = Column(Integer, ForeignKey('players.id'), primary_key=True)
     switch = Column(Boolean, nullable=True)
+    num_in_lineup = Column(Integer, nullable=True)
 
-    def __init__(self, name, parent_position, position, main_rating, handed, attributes, injured, current_team, switch):
+    def __init__(self, name, parent_position, position, main_rating, handed, attributes, injured, current_team, switch, num_in_lineup):
         super().__init__(name, parent_position, position, main_rating, handed, attributes, injured, current_team)
 
         self.switch = switch
+        self.num_in_lineup = num_in_lineup
+
+    def play(self, opp):
+        if isinstance(opp, Batter):
+            raise Exception('Cannot face two batters against each other!')
+
+
 
 
 class Team(Base):
@@ -234,14 +269,21 @@ class Team(Base):
     city = Column(String(50), nullable=False)
     league = Column(Integer, ForeignKey('leagues.id'), nullable=True)
     record = Column(String(10), nullable=False)
+    starting_lineup = Column(ARRAY(String))
+    pitching_rotation = Column(ARRAY(String))
+    bullpen = Column(ARRAY(String))
 
-    def __int__(self, name: str, city: str, league: int, record: dict):
+    def __int__(self, name: str, city: str, league: int, record: dict, starting_lineup: list[str], pitching_rotation: list[str], bullpen: list[str]):
         self.name = name
         self.city = city
         self.league = league
         self.record = record
+        self.starting_lineup = starting_lineup
+        self.pitching_rotation = pitching_rotation
+        self.bullpen = bullpen
 
-    # def play(self, opp):
+
+
 
 
 class League(Base):
@@ -254,3 +296,4 @@ class League(Base):
     def __init__(self, name: str, level: str):
         self.name = name
         self.level = level
+
