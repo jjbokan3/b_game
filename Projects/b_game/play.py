@@ -24,6 +24,18 @@ ma = {
     'avg_pitches': 6
 }
 
+starter_pitch_limit = 100
+reliever_pitch_limit = 25
+
+local_session = Session(bind=engine)
+
+home_batters = local_session.query(Batter).filter(Batter.current_team == home.id).all()
+away_batters = local_session.query(Batter).filter(Batter.current_team == away.id).all()
+home_starters = local_session.query(Pitcher).filter((Pitcher.current_team == home.id) & (Pitcher.position == 'SP')).all()
+away_starters = local_session.query(Pitcher).filter((Pitcher.current_team == away.id) & (Pitcher.position == 'SP')).all()
+home_relievers = local_session.query(Pitcher).filter((Pitcher.current_team == home.id) & (Pitcher.position == 'RP')).all()
+away_relievers = local_session.query(Pitcher).filter((Pitcher.current_team == away.id) & (Pitcher.position == 'RP')).all()
+
 
 def play_ball(pitcher: Pitcher, batter: Batter):
 
@@ -35,24 +47,17 @@ def play_ball(pitcher: Pitcher, batter: Batter):
     out = ma['PA'] - (single+double+triple+hr+walk)
     pitches = (ma['avg_pitches'] + np.random.randint(-3, 2))
 
-    return random.choices(['single', 'double', 'triple', 'hr', 'walk', 'out'], [single, double, triple, hr, walk, out]), pitches
-
-
-    # local_session = Session(bind=engine)
-    #
-    # pitcher = local_session.query(Pitcher).filter(Pitcher.main_rating == 65).first()
-    # batter = local_session.query(Batter).filter(Batter.main_rating == 75).first()
-    #
-    # print(pitcher.attributes)
-    # print(batter.attributes)
-    #
-    # l = play_ball(pitcher, batter)
-    #
-    # print(collections.Counter(l))
+    outcome = random.choices(['single', 'double', 'triple', 'hr', 'walk', 'out'], [single, double, triple, hr, walk, out])
+    # TODO: Player by season table (each row is a player and the year of the stats -- composite key)
+    #       Player by season-game table (each row is a players's stats within a specific game
+    #       Add onto season table while create new entry for each game
+    #       Should it be involved here or in play()?
+    return pitches
 
 
 def outcome_modifier(outcome, bases, pitch_count, pitch_count_inc, home_score, away_score, home_hitting):
-    if all(value == False for value in bases.values()): # Nobody on
+    # Nobody on
+    if list(map(type, list(bases.values()))) == list(map(type, [False, False, False])):
         if outcome in ['walk', 'single']:
             bases = {
                 '1st': True,
@@ -78,7 +83,9 @@ def outcome_modifier(outcome, bases, pitch_count, pitch_count_inc, home_score, a
                 away_score += 1
         elif outcome == 'out':
             pass
-    elif list(bases.values()) == [True, False, False]: # Man on first
+
+    # Man on first
+    elif list(map(type, list(bases.values()))) == list(map(type, [1, None, None])):
         if outcome in ['walk', 'single']:
             bases = {
                 '1st': True,
@@ -114,19 +121,34 @@ def outcome_modifier(outcome, bases, pitch_count, pitch_count_inc, home_score, a
         elif outcome == 'out':
             pass
 
-    elif list(bases.values()) == [False, True, False]: # Man on second
-        if outcome in ['walk', 'single']:
+    # Man on second
+    elif list(map(type, list(bases.values()))) == list(map(type, [None, 1, None])):
+        if outcome in ['walk']:
             bases = {
                 '1st': True,
                 '2nd': True,
                 '3rd': False
             }
+        elif outcome == 'single':
+            bases = {
+                '1st': True,
+                '2nd': False,
+                '3rd': False,
+            }
+            if home_hitting:
+                home_score += 1
+            else:
+                away_score += 1
         elif outcome == 'double':
             bases = {
                 '1st': False,
                 '2nd': True,
-                '3rd': True
+                '3rd': False,
             }
+            if home_hitting:
+                home_score += 1
+            else:
+                away_score += 1
         elif outcome == 'triple':
             bases = {
                 '1st': False,
@@ -150,46 +172,288 @@ def outcome_modifier(outcome, bases, pitch_count, pitch_count_inc, home_score, a
         elif outcome == 'out':
             pass
 
+    # Man on third
+    elif list(map(type, list(bases.values()))) == list(map(type, [None, None, 1])):
+        if outcome in ['walk']:
+            bases = {
+                '1st': True,
+                '2nd': False,
+                '3rd': True
+            }
+        elif outcome == 'single':
+            bases = {
+                '1st': True,
+                '2nd': False,
+                '3rd': False,
+            }
+            if home_hitting:
+                home_score += 1
+            else:
+                away_score += 1
+        elif outcome == 'double':
+            bases = {
+                '1st': False,
+                '2nd': True,
+                '3rd': False,
+            }
+            if home_hitting:
+                home_score += 1
+            else:
+                away_score += 1
+        elif outcome == 'triple':
+            bases = {
+                '1st': False,
+                '2nd': False,
+                '3rd': True
+            }
+            if home_hitting:
+                home_score += 1
+            else:
+                away_score += 1
+        elif outcome == 'hr':
+            if home_hitting:
+                home_score += 2
+            else:
+                away_score += 2
+            bases = {
+                '1st': False,
+                '2nd': False,
+                '3rd': False
+            }
+        elif outcome == 'out':
+            pass
+
+    # Man on first and second
+    elif list(map(type, list(bases.values()))) == list(map(type, [1, 1, None])):
+        if outcome in ['walk']:
+            bases = {
+                '1st': True,
+                '2nd': True,
+                '3rd': True
+            }
+        elif outcome == 'single':
+            bases = {
+                '1st': True,
+                '2nd': True,
+                '3rd': False,
+            }
+            if home_hitting:
+                home_score += 1
+            else:
+                away_score += 1
+        elif outcome == 'double':
+            bases = {
+                '1st': False,
+                '2nd': True,
+                '3rd': True,
+            }
+            if home_hitting:
+                home_score += 1
+            else:
+                away_score += 1
+        elif outcome == 'triple':
+            bases = {
+                '1st': False,
+                '2nd': False,
+                '3rd': True
+            }
+            if home_hitting:
+                home_score += 2
+            else:
+                away_score += 2
+        elif outcome == 'hr':
+            if home_hitting:
+                home_score += 3
+            else:
+                away_score += 3
+            bases = {
+                '1st': False,
+                '2nd': False,
+                '3rd': False
+            }
+        elif outcome == 'out':
+            pass
+
+    # Man on second and third
+    elif list(map(type, list(bases.values()))) == list(map(type, [None, 1, 1])):
+        if outcome in ['walk']:
+            bases = {
+                '1st': True,
+                '2nd': True,
+                '3rd': True
+            }
+        elif outcome == 'single':
+            bases = {
+                '1st': True,
+                '2nd': False,
+                '3rd': False,
+            }
+            if home_hitting:
+                home_score += 2
+            else:
+                away_score += 2
+        elif outcome == 'double':
+            bases = {
+                '1st': False,
+                '2nd': True,
+                '3rd': False,
+            }
+            if home_hitting:
+                home_score += 2
+            else:
+                away_score += 2
+        elif outcome == 'triple':
+            bases = {
+                '1st': False,
+                '2nd': False,
+                '3rd': True
+            }
+            if home_hitting:
+                home_score += 2
+            else:
+                away_score += 2
+        elif outcome == 'hr':
+            if home_hitting:
+                home_score += 3
+            else:
+                away_score += 3
+            bases = {
+                '1st': False,
+                '2nd': False,
+                '3rd': False
+            }
+        elif outcome == 'out':
+            pass
+
+    # Bases loaded
+    elif list(map(type, list(bases.values()))) == list(map(type, [1, 1, 1])):
+        if outcome in ['walk']:
+            bases = {
+                '1st': True,
+                '2nd': True,
+                '3rd': True
+            }
+            if home_hitting:
+                home_score += 1
+            else:
+                away_score += 1
+        elif outcome == 'single':
+            bases = {
+                '1st': True,
+                '2nd': True,
+                '3rd': False,
+            }
+            if home_hitting:
+                home_score += 2
+            else:
+                away_score += 2
+        elif outcome == 'double':
+            bases = {
+                '1st': False,
+                '2nd': True,
+                '3rd': True,
+            }
+            if home_hitting:
+                home_score += 2
+            else:
+                away_score += 2
+        elif outcome == 'triple':
+            bases = {
+                '1st': False,
+                '2nd': False,
+                '3rd': True
+            }
+            if home_hitting:
+                home_score += 3
+            else:
+                away_score += 3
+        elif outcome == 'hr':
+            if home_hitting:
+                home_score += 4
+            else:
+                away_score += 4
+            bases = {
+                '1st': False,
+                '2nd': False,
+                '3rd': False
+            }
+        elif outcome == 'out':
+            pass
 
     pitch_count += pitch_count_inc
 
-
-
+    return bases, pitch_count, home_score, away_score
 
 
 def play(home: Team, away: Team):
     max_outs = 54
     total_outs = 0
     inning_outs = 0
-    pitch_count = 0
-    pitch_count_inc = 0
-    batter_increment = 0
-    next_batter = batter_increment % 9
+    away_pitch_count = 0
+    home_pitch_count = 0
+    home_batter = 0
+    away_batter = 0
+    next_home_batter = home_batter % 9
+    next_away_batter = away_batter % 9
+    home_pitcher = None
+    away_pitcher = None
+    reliever_number = 0
     home_score = 0
     away_score = 0
     outcome = ''
     bases = {
         '1st': False,
         '2nd': False,
-        '3rd': False
-    } #TODO: Include player speed as well?
+        '3rd': False,
+    }  # TODO: Include player speed as well?
     home_hitting = False
 
+    while total_outs != max_outs:
+        while inning_outs != 3:
+            if home_hitting:
+                outcome, pitch_count_inc = play_ball(away_starters[0], home_batters[next_home_batter])
+                bases, pitch_count, home_score, away_score = outcome_modifier(outcome, bases, away_pitch_count, pitch_count_inc, home_score, away_score, home_hitting)
+                home_batter += 1
+                if away_pitcher.attributes['position'] == 'SP' and away_pitch_count > starter_pitch_limit:
+                    away_pitcher = away_relievers[reliever_number]
+                    reliever_number += 1
+                elif away_pitcher.attributes['position'] == 'RP' and away_pitch_count > reliever_pitch_limit:
+                    away_pitcher = away_relievers[reliever_number]
+                    reliever_number += 1
+
+            else:
+                outcome, pitch_count_inc = play_ball(home_starters[0], away_batters[next_away_batter])
+                bases, pitch_count, home_score, away_score = outcome_modifier(outcome, bases, home_pitch_count, pitch_count_inc, home_score, away_score, home_hitting)
+                away_batter += 1
+                if home_pitcher.attributes['position'] == 'SP' and home_pitch_count > starter_pitch_limit:
+                    home_pitcher = home_relievers[reliever_number]
+                    reliever_number += 1
+                elif home_pitcher.attributes['position'] == 'RP' and home_pitch_count > reliever_pitch_limit:
+                    home_pitcher = home_relievers[reliever_number]
+                    reliever_number += 1
+
+        home_hitting = not home_hitting
+        bases = {
+            '1st': False,
+            '2nd': False,
+            '3rd': False,
+        }
+        inning_outs = 0
+
+    if home_score > away_score:
+        home.wins += 1
+    else:
+        away.wins += 1
+    # TODO: Increment player stats at end or in play()?
 
 
-    local_session = Session(bind=engine)
 
-    home_batters = local_session.query(Batter).filter(Batter.current_team == home.id).all()
-    away_batters = local_session.query(Batter).filter(Batter.current_team == away.id).all()
-    home_starters = local_session.query(Pitcher).filter((Pitcher.current_team == home.id) & (Pitcher.position == 'SP')).all()
-    away_starters = local_session.query(Pitcher).filter((Pitcher.current_team == away.id) & (Pitcher.position == 'SP')).all()
-    home_relievers = local_session.query(Pitcher).filter((Pitcher.current_team == home.id) & (Pitcher.position == 'RP')).all()
-    away_relievers = local_session.query(Pitcher).filter((Pitcher.current_team == away.id) & (Pitcher.position == 'RP')).all()
+
 
 
 
     batter = away_batters[0]
-    pitcher = home_starters[0] #TODO: Variable for next starter in lineup
+    pitcher = home_starters[0]  # TODO: Variable for next starter in lineup
     while total_outs < max_outs:
 
         while inning_outs < 3:

@@ -268,16 +268,18 @@ class Team(Base):
     name = Column(String(50), nullable=False)
     city = Column(String(50), nullable=False)
     league = Column(Integer, ForeignKey('leagues.id'), nullable=True)
-    record = Column(String(10), nullable=False)
+    wins = Column(Integer, nullable=False)
+    losses = Column(Integer, nullable=False)
     starting_lineup = Column(ARRAY(String))
     pitching_rotation = Column(ARRAY(String))
     bullpen = Column(ARRAY(String))
 
-    def __int__(self, name: str, city: str, league: int, record: dict, starting_lineup: list[str], pitching_rotation: list[str], bullpen: list[str]):
+    def __int__(self, name: str, city: str, league: int, wins: int, losses: int, starting_lineup: list[str], pitching_rotation: list[str], bullpen: list[str]):
         self.name = name
         self.city = city
         self.league = league
-        self.record = record
+        self.wins = wins
+        self.losses = losses
         self.starting_lineup = starting_lineup
         self.pitching_rotation = pitching_rotation
         self.bullpen = bullpen
