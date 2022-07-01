@@ -236,10 +236,6 @@ class Pitcher(Player):
         self.days_rest = days_rest
         self.pitcher_priority = pitcher_priority
 
-    def play(self, opp):
-        if isinstance(opp, Pitcher):
-            raise Exception('Cannot face two pitchers against each other!')
-
 
 class Batter(Player):
 
@@ -254,11 +250,199 @@ class Batter(Player):
         self.switch = switch
         self.num_in_lineup = num_in_lineup
 
-    def play(self, opp):
-        if isinstance(opp, Batter):
-            raise Exception('Cannot face two batters against each other!')
+
+class PitcherStatsCareer(Base):
+    id = Column(Integer, primary_key=True)
+    pitcher_id = Column(Integer, ForeignKey('pitchers.id'))
+    innings_pitched = Column(Integer)
+    wins = Column(Integer)
+    losses = Column(Integer)
+    holds = Column(Integer)
+    saves = Column(Integer)
+    singles = Column(Integer)
+    doubles = Column(Integer)
+    triples = Column(Integer)
+    home_runs = Column(Integer)
+    runs = Column(Integer)
+    walks = Column(Integer)
+
+    def __init__(self, pitcher_id, innings_pitched, wins, losses, holds, saves, singles, doubles, triples, home_runs, runs, walks):
+        self.pitcher_id = pitcher_id
+        self.innings_pitched = innings_pitched
+        self.wins = wins
+        self.losses = losses
+        self.holds = holds
+        self.saves = saves
+        self.singles = singles
+        self.doubles = doubles
+        self.triples = triples
+        self.home_runs = home_runs
+        self.runs = runs
+        self.walks = walks
 
 
+class PitcherStatsSeason(Base):
+    id = Column(Integer, primary_key=True)
+    pitcher_id = Column(Integer, ForeignKey('pitchers.id'))
+    season_id = Column(Integer, ForeignKey('seasons.id'))
+    innings_pitched = Column(Integer)
+    wins = Column(Integer)
+    losses = Column(Integer)
+    holds = Column(Integer)
+    saves = Column(Integer)
+    singles = Column(Integer)
+    doubles = Column(Integer)
+    triples = Column(Integer)
+    home_runs = Column(Integer)
+    runs = Column(Integer)
+    walks = Column(Integer)
+
+    def __init__(self, pitcher_id, season_id, innings_pitched, wins, losses, holds, saves, singles, doubles, triples, home_runs, runs, walks):
+        self.pitcher_id = pitcher_id
+        self.season_id = season_id
+        self.innings_pitched = innings_pitched
+        self.wins = wins
+        self.losses = losses
+        self.holds = holds
+        self.saves = saves
+        self.singles = singles
+        self.doubles = doubles
+        self.triples = triples
+        self.home_runs = home_runs
+        self.runs = runs
+        self.walks = walks
+
+
+class PitcherStatsGame(Base):
+    id = Column(Integer, primary_key=True)
+    pitcher_id = Column(Integer, ForeignKey('pitchers.id'))
+    game_id = Column(Integer, ForeignKey('games.id'))
+    innings_pitched = Column(Integer)
+    wins = Column(Integer)
+    losses = Column(Integer)
+    holds = Column(Integer)
+    saves = Column(Integer)
+    singles = Column(Integer)
+    doubles = Column(Integer)
+    triples = Column(Integer)
+    home_runs = Column(Integer)
+    runs = Column(Integer)
+    walks = Column(Integer)
+
+    def __init__(self, pitcher_id, game_id, innings_pitched, wins, losses, holds, saves, singles, doubles, triples, home_runs, runs, walks):
+        self.pitcher_id = pitcher_id
+        self.game_id = game_id
+        self.innings_pitched = innings_pitched
+        self.wins = wins
+        self.losses = losses
+        self.holds = holds
+        self.saves = saves
+        self.singles = singles
+        self.doubles = doubles
+        self.triples = triples
+        self.home_runs = home_runs
+        self.runs = runs
+        self.walks = walks
+
+
+class BatterStatsCareer(Base):
+    id = Column(Integer, primary_key=True)
+    batter_id = Column(Integer, ForeignKey('batters.id'))
+    plate_appearances = Column(Integer)
+    at_bats = Column(Integer)
+    runs = Column(Integer)
+    rbis = Column(Integer)
+    singles = Column(Integer)
+    doubles = Column(Integer)
+    triples = Column(Integer)
+    home_runs = Column(Integer)
+    stolen_bases = Column(Integer)
+    caught_stealing = Column(Integer)
+    walks = Column(Integer)
+    strikeouts = Column(Integer)
+
+    def __init__(self, batter_id, plate_appearances, at_bats, runs, rbis, singles, doubles, triples, home_runs, stolen_bases, caught_stealing, walks, strikeouts):
+        self.batter_id = batter_id
+        self.plate_appearances = plate_appearances
+        self.at_bats = at_bats
+        self.runs = runs
+        self.rbis = rbis
+        self.singles = singles
+        self.doubles = doubles
+        self.triples = triples
+        self.home_runs = home_runs
+        self.stolen_bases = stolen_bases
+        self.caught_stealing = caught_stealing
+        self.walks = walks
+        self.strikeouts = strikeouts
+
+
+class BatterStatsSeason(Base):
+    id = Column(Integer, primary_key=True)
+    batter_id = Column(Integer, ForeignKey('batters.id'))
+    season_id = Column(Integer, ForeignKey('seasons.id'))
+    plate_appearances = Column(Integer)
+    at_bats = Column(Integer)
+    runs = Column(Integer)
+    rbis = Column(Integer)
+    singles = Column(Integer)
+    doubles = Column(Integer)
+    triples = Column(Integer)
+    home_runs = Column(Integer)
+    stolen_bases = Column(Integer)
+    caught_stealing = Column(Integer)
+    walks = Column(Integer)
+    strikeouts = Column(Integer)
+
+    def __init__(self, batter_id, season_id, plate_appearances, at_bats, runs, rbis, singles, doubles, triples, home_runs, stolen_bases, caught_stealing, walks, strikeouts):
+        self.batter_id = batter_id
+        self.season_id = season_id
+        self.plate_appearances = plate_appearances
+        self.at_bats = at_bats
+        self.runs = runs
+        self.rbis = rbis
+        self.singles = singles
+        self.doubles = doubles
+        self.triples = triples
+        self.home_runs = home_runs
+        self.stolen_bases = stolen_bases
+        self.caught_stealing = caught_stealing
+        self.walks = walks
+        self.strikeouts = strikeouts
+
+
+class BatterStatsGame(Base):
+    id = Column(Integer, primary_key=True)
+    batter_id = Column(Integer, ForeignKey('batter.id'))
+    game_id = Column(Integer, ForeignKey('games.id'))
+    plate_appearances = Column(Integer)
+    at_bats = Column(Integer)
+    runs = Column(Integer)
+    rbis = Column(Integer)
+    singles = Column(Integer)
+    doubles = Column(Integer)
+    triples = Column(Integer)
+    home_runs = Column(Integer)
+    stolen_bases = Column(Integer)
+    caught_stealing = Column(Integer)
+    walks = Column(Integer)
+    strikeouts = Column(Integer)
+
+    def __init__(self, batter_id, game_id, plate_appearances, at_bats, runs, rbis, singles, doubles, triples, home_runs, stolen_bases, caught_stealing, walks, strikeouts):
+        self.batter_id = batter_id
+        self.game_id = game_id
+        self.plate_appearances = plate_appearances
+        self.at_bats = at_bats
+        self.runs = runs
+        self.rbis = rbis
+        self.singles = singles
+        self.doubles = doubles
+        self.triples = triples
+        self.home_runs = home_runs
+        self.stolen_bases = stolen_bases
+        self.caught_stealing = caught_stealing
+        self.walks = walks
+        self.strikeouts = strikeouts
 
 
 class Team(Base):
@@ -283,9 +467,6 @@ class Team(Base):
         self.starting_lineup = starting_lineup
         self.pitching_rotation = pitching_rotation
         self.bullpen = bullpen
-
-
-
 
 
 class League(Base):
