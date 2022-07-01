@@ -55,203 +55,160 @@ def play_ball(pitcher: Pitcher, batter: Batter):
     return pitches
 
 
-def outcome_modifier(outcome, bases, pitch_count, pitch_count_inc, home_score, away_score, home_hitting):
+def outcome_modifier(outcome, bases, pitch_count, pitch_count_inc, home_score, away_score, home_hitting, pitcher: Pitcher, batter: Batter):
     # Nobody on
-    if list(map(type, list(bases.values()))) == list(map(type, [False, False, False])):
+    if list(map(type, list(bases.values()))) == list(map(type, [None, None, None])):
         if outcome in ['walk', 'single']:
-            bases = {
-                '1st': True,
-                '2nd': False,
-                '3rd': False
-            }
+            bases['1st'] = batter.id
+
         elif outcome == 'double':
-            bases = {
-                '1st': False,
-                '2nd': True,
-                '3rd': False
-            }
+            bases['2nd'] = batter.id
+
         elif outcome == 'triple':
-            bases = {
-                '1st': False,
-                '2nd': False,
-                '3rd': True
-            }
+            bases['3rd'] = batter.id
+
         elif outcome == 'hr':
             if home_hitting:
                 home_score += 1
             else:
                 away_score += 1
+
         elif outcome == 'out':
             pass
 
     # Man on first
     elif list(map(type, list(bases.values()))) == list(map(type, [1, None, None])):
         if outcome in ['walk', 'single']:
-            bases = {
-                '1st': True,
-                '2nd': True,
-                '3rd': False
-            }
+            bases['2nd'] = bases['1st']
+            bases['1st'] = batter.id
+
         elif outcome == 'double':
-            bases = {
-                '1st': False,
-                '2nd': True,
-                '3rd': True
-            }
+            bases['3rd'] = bases['1st']
+            bases['2nd'] = batter.id
+            bases['1st'] = None
+
         elif outcome == 'triple':
-            bases = {
-                '1st': False,
-                '2nd': False,
-                '3rd': True
-            }
+            bases['3rd'] = batter.id
+            bases['1st'] = None
             if home_hitting:
                 home_score += 1
             else:
                 away_score += 1
+
         elif outcome == 'hr':
+            bases['1st'] = None
             if home_hitting:
                 home_score += 2
             else:
                 away_score += 2
-            bases = {
-                '1st': False,
-                '2nd': False,
-                '3rd': False
-            }
+
         elif outcome == 'out':
             pass
 
     # Man on second
     elif list(map(type, list(bases.values()))) == list(map(type, [None, 1, None])):
         if outcome in ['walk']:
-            bases = {
-                '1st': True,
-                '2nd': True,
-                '3rd': False
-            }
+            bases['1st'] = batter.id
+
         elif outcome == 'single':
-            bases = {
-                '1st': True,
-                '2nd': False,
-                '3rd': False,
-            }
+            bases['1st'] = batter.id
+            bases['2nd'] = None
             if home_hitting:
                 home_score += 1
             else:
                 away_score += 1
+
         elif outcome == 'double':
-            bases = {
-                '1st': False,
-                '2nd': True,
-                '3rd': False,
-            }
+            bases['2nd'] = batter.id
             if home_hitting:
                 home_score += 1
             else:
                 away_score += 1
+
         elif outcome == 'triple':
-            bases = {
-                '1st': False,
-                '2nd': False,
-                '3rd': True
-            }
+            bases['3rd'] = batter.id
+            bases['2nd'] = None
             if home_hitting:
                 home_score += 1
             else:
                 away_score += 1
+
         elif outcome == 'hr':
+            bases['2nd'] = None
             if home_hitting:
                 home_score += 2
             else:
                 away_score += 2
-            bases = {
-                '1st': False,
-                '2nd': False,
-                '3rd': False
-            }
+
         elif outcome == 'out':
             pass
 
     # Man on third
     elif list(map(type, list(bases.values()))) == list(map(type, [None, None, 1])):
         if outcome in ['walk']:
-            bases = {
-                '1st': True,
-                '2nd': False,
-                '3rd': True
-            }
+            bases['1st'] = batter.id
+
         elif outcome == 'single':
-            bases = {
-                '1st': True,
-                '2nd': False,
-                '3rd': False,
-            }
+            bases['1st'] = batter.id
+            bases['3rd'] = None
             if home_hitting:
                 home_score += 1
             else:
                 away_score += 1
+
         elif outcome == 'double':
-            bases = {
-                '1st': False,
-                '2nd': True,
-                '3rd': False,
-            }
+            bases['2nd'] = batter.id
+            bases['3rd'] = None
             if home_hitting:
                 home_score += 1
             else:
                 away_score += 1
+
         elif outcome == 'triple':
-            bases = {
-                '1st': False,
-                '2nd': False,
-                '3rd': True
-            }
+            bases['3rd'] = batter.id
             if home_hitting:
                 home_score += 1
             else:
                 away_score += 1
+
         elif outcome == 'hr':
+            bases['3rd'] = None
             if home_hitting:
                 home_score += 2
             else:
                 away_score += 2
-            bases = {
-                '1st': False,
-                '2nd': False,
-                '3rd': False
-            }
+
         elif outcome == 'out':
             pass
 
     # Man on first and second
     elif list(map(type, list(bases.values()))) == list(map(type, [1, 1, None])):
         if outcome in ['walk']:
-            bases = {
-                '1st': True,
-                '2nd': True,
-                '3rd': True
-            }
+            bases['3rd'] = bases['2nd']
+            bases['2nd'] = bases['1st']
+            bases['1st'] = batter.id
+
         elif outcome == 'single':
-            bases = {
-                '1st': True,
-                '2nd': True,
-                '3rd': False,
-            }
+            bases['2nd'] = bases['1st']
+            bases['1st'] = batter.id
             if home_hitting:
                 home_score += 1
             else:
                 away_score += 1
+
         elif outcome == 'double':
-            bases = {
-                '1st': False,
-                '2nd': True,
-                '3rd': True,
-            }
+            bases['3rd'] = bases['1st']
+            bases['2nd'] = batter.id
+            bases['1st'] = None
             if home_hitting:
                 home_score += 1
             else:
                 away_score += 1
+
         elif outcome == 'triple':
+            bases['3rd'] = batter.id
+            bases['2nd'] = None
+            bases['1st'] = None
             bases = {
                 '1st': False,
                 '2nd': False,
@@ -261,122 +218,107 @@ def outcome_modifier(outcome, bases, pitch_count, pitch_count_inc, home_score, a
                 home_score += 2
             else:
                 away_score += 2
+
         elif outcome == 'hr':
+            bases['2nd'] = None
+            bases['1st'] = None
             if home_hitting:
                 home_score += 3
             else:
                 away_score += 3
-            bases = {
-                '1st': False,
-                '2nd': False,
-                '3rd': False
-            }
+
         elif outcome == 'out':
             pass
 
     # Man on second and third
     elif list(map(type, list(bases.values()))) == list(map(type, [None, 1, 1])):
         if outcome in ['walk']:
-            bases = {
-                '1st': True,
-                '2nd': True,
-                '3rd': True
-            }
+            bases['1st'] = batter.id
+
         elif outcome == 'single':
-            bases = {
-                '1st': True,
-                '2nd': False,
-                '3rd': False,
-            }
+            bases['1st'] = batter.id
+            bases['3rd'] = None
+            bases['2nd'] = None
             if home_hitting:
                 home_score += 2
             else:
                 away_score += 2
+
         elif outcome == 'double':
-            bases = {
-                '1st': False,
-                '2nd': True,
-                '3rd': False,
-            }
+            bases['2nd'] = batter.id
+            bases['3rd'] = None
+            bases['2nd'] = None
             if home_hitting:
                 home_score += 2
             else:
                 away_score += 2
+
         elif outcome == 'triple':
-            bases = {
-                '1st': False,
-                '2nd': False,
-                '3rd': True
-            }
+            bases['3rd'] = batter.id
+            bases['2nd'] = None
             if home_hitting:
                 home_score += 2
             else:
                 away_score += 2
+
         elif outcome == 'hr':
+            bases['3rd'] = None
+            bases['2nd'] = None
             if home_hitting:
                 home_score += 3
             else:
                 away_score += 3
-            bases = {
-                '1st': False,
-                '2nd': False,
-                '3rd': False
-            }
+
         elif outcome == 'out':
             pass
 
     # Bases loaded
     elif list(map(type, list(bases.values()))) == list(map(type, [1, 1, 1])):
         if outcome in ['walk']:
-            bases = {
-                '1st': True,
-                '2nd': True,
-                '3rd': True
-            }
+            bases['3rd'] = bases['2nd']
+            bases['2nd'] = bases['1st']
+            bases['1st'] = batter.id
             if home_hitting:
                 home_score += 1
             else:
                 away_score += 1
+
         elif outcome == 'single':
-            bases = {
-                '1st': True,
-                '2nd': True,
-                '3rd': False,
-            }
+            bases['2nd'] = bases['1st']
+            bases['1st'] = batter.id
+            bases['3rd'] = None
             if home_hitting:
                 home_score += 2
             else:
                 away_score += 2
+
         elif outcome == 'double':
-            bases = {
-                '1st': False,
-                '2nd': True,
-                '3rd': True,
-            }
+            bases['3rd'] = bases['1st']
+            bases['2nd'] = batter.id
+            bases['1st'] = None
             if home_hitting:
                 home_score += 2
             else:
                 away_score += 2
+
         elif outcome == 'triple':
-            bases = {
-                '1st': False,
-                '2nd': False,
-                '3rd': True
-            }
+            bases['3rd'] = batter.id
+            bases['2nd'] = None
+            bases['1st'] = None
             if home_hitting:
                 home_score += 3
             else:
                 away_score += 3
+
         elif outcome == 'hr':
+            bases['3rd'] = None
+            bases['2nd'] = None
+            bases['1st'] = None
             if home_hitting:
                 home_score += 4
             else:
                 away_score += 4
-            bases = {
-                '1st': False,
-                '2nd': False,
-                '3rd': False
-            }
+
         elif outcome == 'out':
             pass
 
@@ -402,9 +344,9 @@ def play(home: Team, away: Team):
     away_score = 0
     outcome = ''
     bases = {
-        '1st': False,
-        '2nd': False,
-        '3rd': False,
+        '1st': None,
+        '2nd': None,
+        '3rd': None,
     }  # TODO: Include player speed as well?
     home_hitting = False
 
@@ -434,9 +376,9 @@ def play(home: Team, away: Team):
 
         home_hitting = not home_hitting
         bases = {
-            '1st': False,
-            '2nd': False,
-            '3rd': False,
+            '1st': None,
+            '2nd': None,
+            '3rd': None,
         }
         inning_outs = 0
 
