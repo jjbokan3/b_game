@@ -11,14 +11,17 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy import Column, String, DateTime, Integer, JSON, Boolean, ForeignKey, ARRAY
 
 
-engine = create_engine('postgresql://jjbokan3:sEals091sands@localhost:5432/bgame_db')
+# engine = create_engine('postgresql://jjbokan3:sEals091sands@localhost:5432/bgame_db')
+engine = create_engine('postgresql://jjbokan3@localhost:5432/bgame_db')
 Session = sessionmaker()
 Base = declarative_base()
 
 # Constants
-NUM_PLAYERS = 3000  # Number of players to create
+NUM_PLAYERS = 15000  # Number of players to create
 MEAN_MAIN_RATING = 70  # Mean rating for creation of main ratings
 STD_MAIN_RATING = 9  # Standard deviation for creation of main ratings
+LOWER_BOUND_MAIN_RATING = 50
+HIGHER_BOUND_MAIN_RATING = 100
 ATTRIBUTE_STD = 6  # How much to adjust the incremental change each attribute
 
 # Batting attribute weights
@@ -177,7 +180,7 @@ def assign_pitching_attributes(main_rating: int) -> dict:
 
 def create_player_df():
     df_main = pd.DataFrame(
-        np.around(np.random.normal(MEAN_MAIN_RATING, STD_MAIN_RATING, NUM_PLAYERS)),
+        np.around(np.random.randint(LOWER_BOUND_MAIN_RATING, HIGHER_BOUND_MAIN_RATING, NUM_PLAYERS)),
         columns=["main_rating"],
     )
     df_main['parent_position'] = df_main.apply(lambda row: assign_parent_position(), axis=1)
@@ -251,7 +254,36 @@ class Batter(Player):
         self.num_in_lineup = num_in_lineup
 
 
+class Game(Base):
+    __tablename__ = 'games'
+    id = Column(Integer, primary_key=True)
+    home_team = Column(Integer, ForeignKey('teams.id'), nullable=False)
+    away_team = Column(Integer, ForeignKey('teams.id'), nullable=False)
+    season_id = Column(Integer, ForeignKey('seasons.id'), nullable=False)
+    home_score = Column(Integer, nullable=False)
+    away_score = Column(Integer, nullable=False)
+    date = Column(DateTime, nullable=False)
+
+    def __init__(self, home_team, away_team, season_id, home_score, away_score, date):
+        self.home_team = home_team
+        self.away_team = away_team
+        self.season_id = season_id
+        self.home_score = home_score
+        self.away_score = away_score
+        self.date = date
+
+
+class Season(Base):
+    __tablename__ = 'seasons'
+    id = Column(Integer, primary_key=True)
+    year = Column(Integer, nullable=False)
+
+    def __init__(self, year):
+        self.year = year
+
+
 class PitcherStatsCareer(Base):
+    __tablename__='pitcher_stats_career'
     id = Column(Integer, primary_key=True)
     pitcher_id = Column(Integer, ForeignKey('pitchers.id'))
     innings_pitched = Column(Integer)
@@ -282,6 +314,7 @@ class PitcherStatsCareer(Base):
 
 
 class PitcherStatsSeason(Base):
+    __tablename__='pitcher_stats_season'
     id = Column(Integer, primary_key=True)
     pitcher_id = Column(Integer, ForeignKey('pitchers.id'))
     season_id = Column(Integer, ForeignKey('seasons.id'))
@@ -314,6 +347,7 @@ class PitcherStatsSeason(Base):
 
 
 class PitcherStatsGame(Base):
+    __tablename__='pitcher_stats_game'
     id = Column(Integer, primary_key=True)
     pitcher_id = Column(Integer, ForeignKey('pitchers.id'))
     game_id = Column(Integer, ForeignKey('games.id'))
@@ -346,6 +380,7 @@ class PitcherStatsGame(Base):
 
 
 class BatterStatsCareer(Base):
+    __tablename__='batter_stats_career'
     id = Column(Integer, primary_key=True)
     batter_id = Column(Integer, ForeignKey('batters.id'))
     plate_appearances = Column(Integer)
@@ -378,6 +413,7 @@ class BatterStatsCareer(Base):
 
 
 class BatterStatsSeason(Base):
+    __tablename__='batter_stats_season'
     id = Column(Integer, primary_key=True)
     batter_id = Column(Integer, ForeignKey('batters.id'))
     season_id = Column(Integer, ForeignKey('seasons.id'))
@@ -412,8 +448,9 @@ class BatterStatsSeason(Base):
 
 
 class BatterStatsGame(Base):
+    __tablename__='batter_stats_game'
     id = Column(Integer, primary_key=True)
-    batter_id = Column(Integer, ForeignKey('batter.id'))
+    batter_id = Column(Integer, ForeignKey('batters.id'))
     game_id = Column(Integer, ForeignKey('games.id'))
     plate_appearances = Column(Integer)
     at_bats = Column(Integer)
@@ -450,33 +487,38 @@ class Team(Base):
     __tablename__ = 'teams'
     id = Column(Integer, primary_key=True)
     name = Column(String(50), nullable=False)
-    city = Column(String(50), nullable=False)
     league = Column(Integer, ForeignKey('leagues.id'), nullable=True)
-    wins = Column(Integer, nullable=False)
-    losses = Column(Integer, nullable=False)
-    starting_lineup = Column(ARRAY(String))
-    pitching_rotation = Column(ARRAY(String))
-    bullpen = Column(ARRAY(String))
+    wins = Column(Integer, nullable=True)
+    losses = Column(Integer, nullable=True)
+    starting_lineup = Column(ARRAY(String), nullable=True)
+    pitching_rotation = Column(ARRAY(String), nullable=True)
+    bullpen = Column(ARRAY(String), nullable=True)
 
-    def __int__(self, name: str, city: str, league: int, wins: int, losses: int, starting_lineup: list[str], pitching_rotation: list[str], bullpen: list[str]):
+    def __int__(self, name: str, league: int, wins: int, losses: int, starting_lineup: list[str], pitching_rotation: list[str], bullpen: list[str]):
         self.name = name
-        self.city = city
         self.league = league
         self.wins = wins
         self.losses = losses
         self.starting_lineup = starting_lineup
         self.pitching_rotation = pitching_rotation
         self.bullpen = bullpen
-
+# TODO: Add team stats and structure for league stats (team and player)
 
 class League(Base):
 
     __tablename__ = 'leagues'
     id = Column(Integer, primary_key=True)
     name = Column(String(50), nullable=False)
-    level = Column(String(20), nullable=False)
+    division_list = Column(ARRAY(Integer))
 
-    def __init__(self, name: str, level: str):
+    def __init__(self, name: str, team_list: list[int]):
         self.name = name
-        self.level = level
+        self.team_list = team_list
 
+class Division(Base):
+
+    __tablename__ = 'divisions'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(50), nullable=False)
+    league = Column(Integer, ForeignKey('leagues.id'), nullable=False)
+    team_list = Column(ARRAY(Integer))
