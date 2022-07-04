@@ -11,8 +11,8 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy import Column, String, DateTime, Integer, JSON, Boolean, ForeignKey, ARRAY
 
 
-# engine = create_engine('postgresql://jjbokan3:sEals091sands@localhost:5432/bgame_db')
-engine = create_engine('postgresql://jjbokan3@localhost:5432/bgame_db')
+engine = create_engine('postgresql://jjbokan3:sEals091sands@localhost:5432/bgame_db')
+# engine = create_engine('postgresql://jjbokan3@localhost:5432/bgame_db')
 Session = sessionmaker()
 Base = declarative_base()
 
@@ -178,7 +178,7 @@ def assign_pitching_attributes(main_rating: int) -> dict:
     return return_dict
 
 
-def create_player_df():
+def create_player_df() -> pd.DataFrame:
     df_main = pd.DataFrame(
         np.around(np.random.randint(LOWER_BOUND_MAIN_RATING, HIGHER_BOUND_MAIN_RATING, NUM_PLAYERS)),
         columns=["main_rating"],
@@ -282,7 +282,8 @@ class Season(Base):
         self.year = year
 
 
-class PitcherStatsGame(Base):
+class PitcherGameStats(Base):
+
     __tablename__='pitcher_stats_game'
     id = Column(Integer, primary_key=True)
     pitcher_id = Column(Integer, ForeignKey('pitchers.id'))
@@ -313,7 +314,33 @@ class PitcherStatsGame(Base):
         self.home_runs = home_runs
         self.runs = runs
         self.walks = walks
+        self.era = self.calc_era()
+        self.whip = self.calc_whip()
 
+    def calc_era(self):
+        return 9 * self.runs / self.innings_pitched
+
+    def calc_whip(self):
+        return (self.hits + self.walks) / self.innings_pitched
+
+    def __add__(self, other):
+        if self.batter_id != other.batter_id:
+            raise Exception("Cannot aggregate stats from different players!")
+        else:
+            return PitcherGameStats(self.pitcher_id, self.game_id, self.innings_pitched + other.innings_pitched, self.wins + other.wins, self.losses + other.losses, self.holds + other.holds, self.saves + other.saves, self.singles + other.singles, self.doubles + other.doubles, self.triples + other.triples, self.home_runs + other.home_runs, self.runs + other.runs, self.walks + other.walks)
+            # TODO: Configure how to add innings pitched regarding decimal notation
+
+    def __str__(self):
+        return f"Pitcher ID: {self.pitcher_id} Game ID: {self.game_id}"
+
+    def __repr__(self):
+        return f"PitcherGameStats({self.pitcher_id}, {self.game_id}, {self.innings_pitched}, {self.wins}, {self.losses}, {self.holds}, {self.saves}, {self.singles}, {self.doubles}, {self.triples}, {self.home_runs}, {self.runs}, {self.walks})"
+
+    def __radd__(self, other):
+        if other == 0:
+            return self
+        else:
+            return self.__add__(other)
 
 
 class BatterStatsGame(Base):
@@ -378,10 +405,10 @@ class BatterStatsGame(Base):
             return BatterStatsGame(self.batter_id, self.game_id, self.singles + other.singles, self.doubles + other.doubles, self.triples + other.triples, self.home_runs + other.home_runs, self.walks + other.walks, self.at_bats + other.at_bats)
 
     def __str__(self):
-        return f"Player ID: {self.batter_id}"
+        return f"Player ID: {self.batter_id} Game ID: {self.game_id}"
 
     def __repr__(self):
-        return f"Player ID: {self.batter_id} Singles: {self.singles}"
+        return f"BatterStatsGame({self.batter_id}, {self.game_id}, {self.at_bats}, {self.runs}, {self.rbis}, {self.singles}, {self.doubles}, {self.triples}, {self.home_runs}, {self.walks}, {self.stolen_bases}, {self.caught_stealing}, {self.strikeouts})"
 
     def __radd__(self, other):
         if other == 0:
@@ -396,20 +423,14 @@ class Team(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(50), nullable=False)
     league = Column(Integer, ForeignKey('leagues.id'), nullable=True)
-    wins = Column(Integer, nullable=True)
-    losses = Column(Integer, nullable=True)
-    starting_lineup = Column(ARRAY(String), nullable=True)
-    pitching_rotation = Column(ARRAY(String), nullable=True)
-    bullpen = Column(ARRAY(String), nullable=True)
+    wins = Column(Integer, default=0)
+    losses = Column(Integer, default=0)
 
-    def __int__(self, name: str, league: int, wins: int, losses: int, starting_lineup: list[str], pitching_rotation: list[str], bullpen: list[str]):
+    def __init__(self, name: str, league: int, wins: int = 0, losses: int = 0):
         self.name = name
         self.league = league
         self.wins = wins
         self.losses = losses
-        self.starting_lineup = starting_lineup
-        self.pitching_rotation = pitching_rotation
-        self.bullpen = bullpen
 # TODO: Add team stats and structure for league stats (team and player)
 
 

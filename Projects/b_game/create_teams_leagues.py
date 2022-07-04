@@ -14,7 +14,13 @@ leagues = ['Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond']
 # Silver (70, 80]
 # Bronze (60, 70)
 
-
+league_ratings = {
+    'Diamond': 92.5,
+    'Platinum': 87.5,
+    'Gold': 80,
+    'Silver': 70,
+    'Bronze': 60,
+}
 
 animals = pd.read_csv('Team Name Data/animals.csv', header=None)
 animals.columns = ['Animals']
@@ -54,6 +60,10 @@ ss = [batter for batter in all_batters if batter.position == 'SS']
 sp = [pitcher for pitcher in all_pitchers if pitcher.position == 'SP']
 rp = [pitcher for pitcher in all_pitchers if pitcher.position == 'RP']
 
+infielders = [c, b1, b2, b3, ss]
+outfielders = [lf, cf, rf]
+pitchers = [sp, rp]
+
 # TODO: Figure out how to add players to teams
 #       Create teams first
 #       1 of each position, 1 extra catcher, 2inf, 2outf
@@ -68,20 +78,103 @@ rp = [pitcher for pitcher in all_pitchers if pitcher.position == 'RP']
 #       you filter the players into a certain range and then pick those players?
 #
 # for x in positions:
-
+t0 = time.time()
+on_team = []
 
 for x in leagues:
+    league_rating = league_ratings[x]
+    x_league = League(x)
+    local_session.add(x_league)
+    local_session.commit()
+    x_league = local_session.query(League).filter(League.name == x).all()[0]
     for y in range(30):
-        new_team = Team(team_name, x)
-        local_session.add(new_team)
-        local_session.commit()
-        print(f"Added {team_name} to {x}")
         team_name = f"{random.sample(cities_list, 1)[0]} {random.sample(animals_list, 1)[0]}"
-        print(team_name)
-        for z in range(15):
-            new_player = Player(team_name, x)
-            local_session.add(new_player)
-            local_session.commit()
-            print(f"Added {team_name} to {x}")
-            team_name = f"{random.sample(cities_list, 1)[0]} {random.sample(animals_list, 1)[0]}"
-            print(team_name)
+        y_team = Team(team_name, x_league.id)
+        local_session.add(y_team)
+        local_session.commit()
+        y_team = local_session.query(Team).filter(Team.name == y_team.name).all()[0]
+
+
+        for count, inf in enumerate(infielders):
+            t0 = time.time()
+            rating_inf = []
+            while True:
+                try:
+                    rating = np.around(np.random.normal(league_rating, 1.5))
+                    print(time.time() - t0)
+                    rating_inf = [infielder for infielder in inf if infielder.main_rating == rating]
+                    # TODO: Takes way to long to run
+                    print(time.time() - t0)
+                    break
+                except:
+                    continue
+
+            player = random.choice(rating_inf)
+            player.current_team = y_team.id
+            on_team.append(player.id)
+            infielders[count].remove(player)
+
+        print(f"Infielders Created")
+
+        for count, inf in enumerate(outfielders):
+            rating_outf = []
+            while True:
+                try:
+                    rating = np.around(np.random.normal(league_rating, 1.5))
+                    rating_outf = [outfielder for outfielder in inf if outfielder.main_rating == rating]
+                    break
+                except:
+                    continue
+
+            player = random.choice(rating_outf)
+            player.current_team = y_team.id
+            on_team.append(player.id)
+            outfielders[count].remove(player)
+
+        print(f"Outfielders Created")
+
+        for start in range(5):
+            rating_start = []
+            while True:
+                try:
+                    rating = np.around(np.random.normal(league_rating, 1.5))
+                    rating_start = [starter for starter in sp if starter.main_rating == rating]
+                    break
+                except:
+                    continue
+
+            player = random.choice(rating_start)
+            player.current_team = y_team.id
+            on_team.append(player.id)
+            sp.remove(player)
+
+        print(f"Starters Created")
+
+        for start in range(8):
+            rating_relieve = []
+            while True:
+                try:
+                    rating = np.around(np.random.normal(league_rating, 1.5))
+                    rating_relieve = [reliever for reliever in rp if reliever.main_rating == rating]
+                    break
+                except:
+                    continue
+            player = random.choice(rating_relieve)
+            player.current_team = y_team.id
+            on_team.append(player.id)
+            rp.remove(player)
+
+        print(f"Relievers Created")
+
+        print(f"Team {y} created")
+
+    local_session.commit()
+    print(f"{x} League Created")
+
+
+t1 = time.time()
+print(t1-t0)
+
+
+
+
