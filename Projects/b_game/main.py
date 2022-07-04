@@ -282,70 +282,6 @@ class Season(Base):
         self.year = year
 
 
-class PitcherStatsCareer(Base):
-    __tablename__='pitcher_stats_career'
-    id = Column(Integer, primary_key=True)
-    pitcher_id = Column(Integer, ForeignKey('pitchers.id'))
-    innings_pitched = Column(Integer)
-    wins = Column(Integer)
-    losses = Column(Integer)
-    holds = Column(Integer)
-    saves = Column(Integer)
-    singles = Column(Integer)
-    doubles = Column(Integer)
-    triples = Column(Integer)
-    home_runs = Column(Integer)
-    runs = Column(Integer)
-    walks = Column(Integer)
-
-    def __init__(self, pitcher_id, innings_pitched, wins, losses, holds, saves, singles, doubles, triples, home_runs, runs, walks):
-        self.pitcher_id = pitcher_id
-        self.innings_pitched = innings_pitched
-        self.wins = wins
-        self.losses = losses
-        self.holds = holds
-        self.saves = saves
-        self.singles = singles
-        self.doubles = doubles
-        self.triples = triples
-        self.home_runs = home_runs
-        self.runs = runs
-        self.walks = walks
-
-
-class PitcherStatsSeason(Base):
-    __tablename__='pitcher_stats_season'
-    id = Column(Integer, primary_key=True)
-    pitcher_id = Column(Integer, ForeignKey('pitchers.id'))
-    season_id = Column(Integer, ForeignKey('seasons.id'))
-    innings_pitched = Column(Integer)
-    wins = Column(Integer)
-    losses = Column(Integer)
-    holds = Column(Integer)
-    saves = Column(Integer)
-    singles = Column(Integer)
-    doubles = Column(Integer)
-    triples = Column(Integer)
-    home_runs = Column(Integer)
-    runs = Column(Integer)
-    walks = Column(Integer)
-
-    def __init__(self, pitcher_id, season_id, innings_pitched, wins, losses, holds, saves, singles, doubles, triples, home_runs, runs, walks):
-        self.pitcher_id = pitcher_id
-        self.season_id = season_id
-        self.innings_pitched = innings_pitched
-        self.wins = wins
-        self.losses = losses
-        self.holds = holds
-        self.saves = saves
-        self.singles = singles
-        self.doubles = doubles
-        self.triples = triples
-        self.home_runs = home_runs
-        self.runs = runs
-        self.walks = walks
-
-
 class PitcherStatsGame(Base):
     __tablename__='pitcher_stats_game'
     id = Column(Integer, primary_key=True)
@@ -379,80 +315,13 @@ class PitcherStatsGame(Base):
         self.walks = walks
 
 
-class BatterStatsCareer(Base):
-    __tablename__='batter_stats_career'
-    id = Column(Integer, primary_key=True)
-    batter_id = Column(Integer, ForeignKey('batters.id'))
-    plate_appearances = Column(Integer)
-    at_bats = Column(Integer)
-    runs = Column(Integer)
-    rbis = Column(Integer)
-    singles = Column(Integer)
-    doubles = Column(Integer)
-    triples = Column(Integer)
-    home_runs = Column(Integer)
-    stolen_bases = Column(Integer)
-    caught_stealing = Column(Integer)
-    walks = Column(Integer)
-    strikeouts = Column(Integer)
-
-    def __init__(self, batter_id, plate_appearances, at_bats, runs, rbis, singles, doubles, triples, home_runs, stolen_bases, caught_stealing, walks, strikeouts):
-        self.batter_id = batter_id
-        self.plate_appearances = plate_appearances
-        self.at_bats = at_bats
-        self.runs = runs
-        self.rbis = rbis
-        self.singles = singles
-        self.doubles = doubles
-        self.triples = triples
-        self.home_runs = home_runs
-        self.stolen_bases = stolen_bases
-        self.caught_stealing = caught_stealing
-        self.walks = walks
-        self.strikeouts = strikeouts
-
-
-class BatterStatsSeason(Base):
-    __tablename__='batter_stats_season'
-    id = Column(Integer, primary_key=True)
-    batter_id = Column(Integer, ForeignKey('batters.id'))
-    season_id = Column(Integer, ForeignKey('seasons.id'))
-    plate_appearances = Column(Integer)
-    at_bats = Column(Integer)
-    runs = Column(Integer)
-    rbis = Column(Integer)
-    singles = Column(Integer)
-    doubles = Column(Integer)
-    triples = Column(Integer)
-    home_runs = Column(Integer)
-    stolen_bases = Column(Integer)
-    caught_stealing = Column(Integer)
-    walks = Column(Integer)
-    strikeouts = Column(Integer)
-
-    def __init__(self, batter_id, season_id, plate_appearances, at_bats, runs, rbis, singles, doubles, triples, home_runs, stolen_bases, caught_stealing, walks, strikeouts):
-        self.batter_id = batter_id
-        self.season_id = season_id
-        self.plate_appearances = plate_appearances
-        self.at_bats = at_bats
-        self.runs = runs
-        self.rbis = rbis
-        self.singles = singles
-        self.doubles = doubles
-        self.triples = triples
-        self.home_runs = home_runs
-        self.stolen_bases = stolen_bases
-        self.caught_stealing = caught_stealing
-        self.walks = walks
-        self.strikeouts = strikeouts
-
 
 class BatterStatsGame(Base):
+
     __tablename__='batter_stats_game'
     id = Column(Integer, primary_key=True)
     batter_id = Column(Integer, ForeignKey('batters.id'))
     game_id = Column(Integer, ForeignKey('games.id'))
-    plate_appearances = Column(Integer)
     at_bats = Column(Integer)
     runs = Column(Integer)
     rbis = Column(Integer)
@@ -460,15 +329,15 @@ class BatterStatsGame(Base):
     doubles = Column(Integer)
     triples = Column(Integer)
     home_runs = Column(Integer)
+    walks = Column(Integer)
     stolen_bases = Column(Integer)
     caught_stealing = Column(Integer)
-    walks = Column(Integer)
     strikeouts = Column(Integer)
 
-    def __init__(self, batter_id, game_id, plate_appearances, at_bats, runs, rbis, singles, doubles, triples, home_runs, stolen_bases, caught_stealing, walks, strikeouts):
+    def __init__(self, batter_id, game_id, at_bats, runs, rbis, singles, doubles, triples, home_runs, walks, stolen_bases, caught_stealing, strikeouts):
+
         self.batter_id = batter_id
         self.game_id = game_id
-        self.plate_appearances = plate_appearances
         self.at_bats = at_bats
         self.runs = runs
         self.rbis = rbis
@@ -476,10 +345,49 @@ class BatterStatsGame(Base):
         self.doubles = doubles
         self.triples = triples
         self.home_runs = home_runs
+        self.walks = walks
         self.stolen_bases = stolen_bases
         self.caught_stealing = caught_stealing
-        self.walks = walks
         self.strikeouts = strikeouts
+        self.obp = self.calc_obp()
+        self.slg = self.calc_slg()
+        self.ops = self.obp + self.slg
+
+    def calc_obp(self) -> float:
+        """
+        Calculates On-Base-Percentage from the given statistics
+
+        Returns:
+            On-Base-Percentage
+        """
+        return (self.singles + self.doubles + self.triples + self.home_runs + self.walks) / (self.at_bats + self.walks)
+
+    def calc_slg(self) -> float:
+        """
+        Calculates Slugging from the given statistics
+
+        Returns:
+            Slugging
+        """
+        return (self.singles + (self.doubles * 2) + (self.triples * 3) + (self.home_runs * 4)) / self.at_bats
+
+    def __add__(self, other):
+        if self.batter_id != other.batter_id:
+            raise Exception("Cannot aggregate stats from different players!")
+        else:
+            return BatterStatsGame(self.batter_id, self.game_id, self.singles + other.singles, self.doubles + other.doubles, self.triples + other.triples, self.home_runs + other.home_runs, self.walks + other.walks, self.at_bats + other.at_bats)
+
+    def __str__(self):
+        return f"Player ID: {self.batter_id}"
+
+    def __repr__(self):
+        return f"Player ID: {self.batter_id} Singles: {self.singles}"
+
+    def __radd__(self, other):
+        if other == 0:
+            return self
+        else:
+            return self.__add__(other)
 
 
 class Team(Base):
@@ -504,21 +412,21 @@ class Team(Base):
         self.bullpen = bullpen
 # TODO: Add team stats and structure for league stats (team and player)
 
+
 class League(Base):
 
     __tablename__ = 'leagues'
     id = Column(Integer, primary_key=True)
     name = Column(String(50), nullable=False)
-    division_list = Column(ARRAY(Integer))
+    # division_list = Column(ARRAY(Integer))
 
-    def __init__(self, name: str, team_list: list[int]):
+    def __init__(self, name: str):
         self.name = name
-        self.team_list = team_list
 
-class Division(Base):
-
-    __tablename__ = 'divisions'
-    id = Column(Integer, primary_key=True)
-    name = Column(String(50), nullable=False)
-    league = Column(Integer, ForeignKey('leagues.id'), nullable=False)
-    team_list = Column(ARRAY(Integer))
+# class Division(Base):
+#
+#     __tablename__ = 'divisions'
+#     id = Column(Integer, primary_key=True)
+#     name = Column(String(50), nullable=False)
+#     league = Column(Integer, ForeignKey('leagues.id'), nullable=False)
+#     team_list = Column(ARRAY(Integer))

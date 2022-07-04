@@ -7,15 +7,14 @@ local_session = Session(bind=engine)
 
 # TODO: Create leagues THEN teams or vice versa?
 leagues = ['Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond']
-divisions = ['Red', 'Blue', 'Purple']
+# divisions = ['Red', 'Blue', 'Purple']
 # Diamond (95, 100]
 # Platinum (90, 95]
 # Gold (80, 90]
 # Silver (70, 80]
 # Bronze (60, 70)
 
-for league in leagues:
-    
+
 
 animals = pd.read_csv('Team Name Data/animals.csv', header=None)
 animals.columns = ['Animals']
@@ -68,8 +67,7 @@ rp = [pitcher for pitcher in all_pitchers if pitcher.position == 'RP']
 #       within the league constraints or should I create teams where
 #       you filter the players into a certain range and then pick those players?
 #
-for x in positions:
-
+# for x in positions:
 
 
 for x in leagues:
