@@ -81,6 +81,7 @@ pitchers = [sp, rp]
 t0 = time.time()
 on_team = []
 
+# 7min 27sec on M1 Pro Macboob Pro
 for x in leagues:
     league_rating = league_ratings[x]
     x_league = League(x)
@@ -99,15 +100,10 @@ for x in leagues:
             t0 = time.time()
             rating_inf = []
             while True:
-                try:
-                    rating = np.around(np.random.normal(league_rating, 1.5))
-                    print(time.time() - t0)
-                    rating_inf = [infielder for infielder in inf if infielder.main_rating == rating]
-                    # TODO: Takes way to long to run
-                    print(time.time() - t0)
+                rating = np.around(np.random.normal(league_rating, 1.5))
+                rating_inf = [infielder for infielder in inf if infielder.main_rating == rating]
+                if len(rating_inf) > 0:
                     break
-                except:
-                    continue
 
             player = random.choice(rating_inf)
             player.current_team = y_team.id
@@ -119,12 +115,10 @@ for x in leagues:
         for count, inf in enumerate(outfielders):
             rating_outf = []
             while True:
-                try:
-                    rating = np.around(np.random.normal(league_rating, 1.5))
-                    rating_outf = [outfielder for outfielder in inf if outfielder.main_rating == rating]
+                rating = np.around(np.random.normal(league_rating, 1.5))
+                rating_outf = [outfielder for outfielder in inf if outfielder.main_rating == rating]
+                if len(rating_outf) > 0:
                     break
-                except:
-                    continue
 
             player = random.choice(rating_outf)
             player.current_team = y_team.id
@@ -136,12 +130,10 @@ for x in leagues:
         for start in range(5):
             rating_start = []
             while True:
-                try:
-                    rating = np.around(np.random.normal(league_rating, 1.5))
-                    rating_start = [starter for starter in sp if starter.main_rating == rating]
+                rating = np.around(np.random.normal(league_rating, 1.5))
+                rating_start = [starter for starter in sp if starter.main_rating == rating]
+                if len(rating_start) > 0:
                     break
-                except:
-                    continue
 
             player = random.choice(rating_start)
             player.current_team = y_team.id
@@ -153,12 +145,11 @@ for x in leagues:
         for start in range(8):
             rating_relieve = []
             while True:
-                try:
-                    rating = np.around(np.random.normal(league_rating, 1.5))
-                    rating_relieve = [reliever for reliever in rp if reliever.main_rating == rating]
+                rating = np.around(np.random.normal(league_rating, 1.5))
+                rating_relieve = [reliever for reliever in rp if reliever.main_rating == rating]
+                if len(rating_relieve) > 0:
                     break
-                except:
-                    continue
+
             player = random.choice(rating_relieve)
             player.current_team = y_team.id
             on_team.append(player.id)

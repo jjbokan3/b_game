@@ -5,14 +5,17 @@ import random
 import names
 import collections
 import pickle
+import datetime
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
-from sqlalchemy import Column, String, DateTime, Integer, JSON, Boolean, ForeignKey, ARRAY
+from sqlalchemy import Column, String, DateTime, Integer, JSON, Boolean, ForeignKey, ARRAY, INTEGER, Sequence
 
 
-engine = create_engine('postgresql://jjbokan3:sEals091sands@localhost:5432/bgame_db')
-# engine = create_engine('postgresql://jjbokan3@localhost:5432/bgame_db')
+# engine = create_engine('postgresql://jjbokan3:sEals091sands@localhost:5432/bgame_db_testing')
+# engine = create_engine('postgresql://jjbokan3:sEals091sands@localhost:5432/bgame_db')
+engine = create_engine('postgresql://jjbokan3@localhost:5432/bgame_db')
+# engine = create_engine('postgresql://jjbokan3@localhost:5432/bgame_db_testing')
 Session = sessionmaker()
 Base = declarative_base()
 
@@ -108,6 +111,8 @@ ma = {
     'SLG': .411,
     'OPS': .728,
 }
+
+current_year = datetime.datetime.now().year
 
 def assign_parent_position():
     return random.choices(list(PARENT_POSITION_PROB.keys()), list(PARENT_POSITION_PROB.values()))[0]
@@ -259,7 +264,7 @@ class Game(Base):
     id = Column(Integer, primary_key=True)
     home_team = Column(Integer, ForeignKey('teams.id'), nullable=False)
     away_team = Column(Integer, ForeignKey('teams.id'), nullable=False)
-    season_id = Column(Integer, ForeignKey('seasons.id'), nullable=False)
+    season_id = Column(Integer, ForeignKey('seasons.year'), nullable=False)
     home_score = Column(Integer, nullable=False)
     away_score = Column(Integer, nullable=False)
     date = Column(DateTime, nullable=False)
@@ -275,11 +280,9 @@ class Game(Base):
 
 class Season(Base):
     __tablename__ = 'seasons'
-    id = Column(Integer, primary_key=True)
-    year = Column(Integer, nullable=False)
-
-    def __init__(self, year):
-        self.year = year
+    year = Column(Integer,
+                  Sequence('article_aid_seq', start=current_year, increment=1),
+                  primary_key=True)
 
 
 class PitcherGameStats(Base):
@@ -441,8 +444,22 @@ class League(Base):
     name = Column(String(50), nullable=False)
     # division_list = Column(ARRAY(Integer))
 
-    def __init__(self, name: str):
+    def __init__(self, name: str, schedule: list = None):
         self.name = name
+        self.schedule = schedule
+
+class LeagueSeasonSchedule(Base):
+
+    __tablename__ = 'league_season_schedule'
+    id = Column(Integer, primary_key=True)
+    league_id = Column(Integer, ForeignKey('leagues.id'))
+    season_id = Column(Integer, ForeignKey('seasons.year'))
+    schedule = Column(ARRAY(Integer), nullable=True)
+
+    def __init__(self, league_id: int, season_id: int, schedule: list = None):
+        self.league_id = league_id
+        self.season_id = season_id
+        self.schedule = schedule
 
 # class Division(Base):
 #
@@ -451,3 +468,6 @@ class League(Base):
 #     name = Column(String(50), nullable=False)
 #     league = Column(Integer, ForeignKey('leagues.id'), nullable=False)
 #     team_list = Column(ARRAY(Integer))
+
+# TODO: Look into relationships and mapping within sqlalchemy
+
