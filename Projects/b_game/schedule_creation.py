@@ -45,3 +45,4 @@ for count, (league, teams) in enumerate(leagues.items()):
 local_session.commit()
 
 
+# TODO: Add place in lineup for players on teams and energy for pitchers

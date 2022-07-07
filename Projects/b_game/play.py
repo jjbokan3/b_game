@@ -29,13 +29,6 @@ reliever_pitch_limit = 25
 
 local_session = Session(bind=engine)
 
-home_batters = local_session.query(Batter).filter(Batter.current_team == home.id).all()
-away_batters = local_session.query(Batter).filter(Batter.current_team == away.id).all()
-home_starters = local_session.query(Pitcher).filter((Pitcher.current_team == home.id) & (Pitcher.position == 'SP')).all()
-away_starters = local_session.query(Pitcher).filter((Pitcher.current_team == away.id) & (Pitcher.position == 'SP')).all()
-home_relievers = local_session.query(Pitcher).filter((Pitcher.current_team == home.id) & (Pitcher.position == 'RP')).all()
-away_relievers = local_session.query(Pitcher).filter((Pitcher.current_team == away.id) & (Pitcher.position == 'RP')).all()
-
 
 def play(home: Team, away: Team):
     max_outs = 54
@@ -60,11 +53,18 @@ def play(home: Team, away: Team):
     }  # TODO: Include player speed as well?
     home_hitting = False
 
+    home_batters = local_session.query(Batter).filter(Batter.current_team == home_team_id).all()
+    away_batters = local_session.query(Batter).filter(Batter.current_team == away_team_id).all()
+    home_starters = local_session.query(Pitcher).filter((Pitcher.current_team == home_team_id) & (Pitcher.position == 'SP')).all()
+    away_starters = local_session.query(Pitcher).filter((Pitcher.current_team == away_team_id) & (Pitcher.position == 'SP')).all()
+    home_relievers = local_session.query(Pitcher).filter((Pitcher.current_team == home_team_id) & (Pitcher.position == 'RP')).all()
+    away_relievers = local_session.query(Pitcher).filter((Pitcher.current_team == away_team_id) & (Pitcher.position == 'RP')).all()
+
     while total_outs != max_outs:
         while inning_outs != 3:
             if home_hitting:
                 outcome, pitch_count_inc = play_ball(away_starters[0], home_batters[next_home_batter])
-                bases, pitch_count, home_score, away_score = outcome_modifier(outcome, bases, away_pitch_count, pitch_count_inc, home_score, away_score, home_hitting)
+                bases, pitch_count, home_score, away_score = outcome_modifier(outcome, bases, away_pitch_count, pitch_count_inc, home_score, away_score, home_hitting, inning_outs, home_batters[next_home_batter], away_pitcher)
                 home_batter += 1
                 if away_pitcher.attributes['position'] == 'SP' and away_pitch_count > starter_pitch_limit:
                     away_pitcher = away_relievers[reliever_number]
@@ -75,7 +75,7 @@ def play(home: Team, away: Team):
 
             else:
                 outcome, pitch_count_inc = play_ball(home_starters[0], away_batters[next_away_batter])
-                bases, pitch_count, home_score, away_score = outcome_modifier(outcome, bases, home_pitch_count, pitch_count_inc, home_score, away_score, home_hitting)
+                bases, pitch_count, home_score, away_score = outcome_modifier(outcome, bases, home_pitch_count, pitch_count_inc, home_score, away_score, home_hitting, inning_outs, away_batters[next_away_batter], home_pitcher)
                 away_batter += 1
                 if home_pitcher.attributes['position'] == 'SP' and home_pitch_count > starter_pitch_limit:
                     home_pitcher = home_relievers[reliever_number]
@@ -406,3 +406,17 @@ def play_ball(pitcher: Pitcher, batter: Batter):
     return outcome, pitches
 
 
+leagues = [1, 2, 3, 4, 5]
+
+for league in leagues:
+
+    week_schedule = local_session.query(LeagueSeasonSchedule).filter(LeagueSeasonSchedule.league_id == league).one().schedule[0]
+
+    for game in week_schedule:
+
+        away_team_id = game[0]
+        home_team_id = game[1]
+
+        play(game[0], game[1])
+
+        print(f'{away_team_id} {home_team_id} done!')

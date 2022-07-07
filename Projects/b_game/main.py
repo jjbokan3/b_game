@@ -12,10 +12,8 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy import Column, String, DateTime, Integer, JSON, Boolean, ForeignKey, ARRAY, INTEGER, Sequence
 
 
-# engine = create_engine('postgresql://jjbokan3:sEals091sands@localhost:5432/bgame_db_testing')
-# engine = create_engine('postgresql://jjbokan3:sEals091sands@localhost:5432/bgame_db')
-engine = create_engine('postgresql://jjbokan3@localhost:5432/bgame_db')
-# engine = create_engine('postgresql://jjbokan3@localhost:5432/bgame_db_testing')
+engine = create_engine('postgresql://jjbokan3:sEals091sands@localhost:5432/bgame_db')
+# engine = create_engine('postgresql://jjbokan3@localhost:5432/bgame_db')
 Session = sessionmaker()
 Base = declarative_base()
 
