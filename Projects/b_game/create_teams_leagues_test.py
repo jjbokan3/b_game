@@ -1,10 +1,7 @@
-import profile
-
 from main import *
 import pandas as pd
 import random
 import time
-import pprofile
 
 local_session = Session(bind=engine)
 
@@ -42,8 +39,10 @@ randomly select 13 batters, 5 starters, and 8 relievers to each team
 all_batters = local_session.query(Batter).all()
 all_pitchers = local_session.query(Pitcher).all()
 
-
-positions = ['C', 'C', '1B', '2B', '2B', '3B', 'SS', 'SS', 'LF', 'LF', 'CF', 'CF', 'RF']
+infield = ['C', '1B', '2B', '2B', '3B', 'SS']
+outfield = ['LF', 'CF', 'RF']
+infield_choices = ['C', 'C', '1B', '2B', '2B', '3B', 'SS', 'LF', 'CF', 'RF', np.random.choice(infield)[0], np.random.choice(infield)[0]]
+outfield_choices = ['LF', 'CF', 'RF', np.random.choice(outfield)[0], np.random.choice(outfield)[0]]
 starters = ['SP', 'SP', 'SP', 'SP', 'SP']
 relievers = ['RP', 'RP', 'RP', 'RP', 'RP', 'RP', 'RP', 'RP']
 
@@ -59,10 +58,10 @@ sp = [pitcher for pitcher in all_pitchers if pitcher.position == 'SP']
 rp = [pitcher for pitcher in all_pitchers if pitcher.position == 'RP']
 
 
-
 infielders = [c, b1, b2, b3, ss]
 outfielders = [lf, cf, rf]
 pitchers = [sp, rp]
+on_team = []
 
 # TODO: Figure out how to add players to teams
 #       Create teams first
@@ -78,53 +77,15 @@ pitchers = [sp, rp]
 #       you filter the players into a certain range and then pick those players?
 #
 # for x in positions:
-t0 = time.time()
-on_team = []
 
-# print(infielders)
-# rating_inf = [infielder for infielder in infielders if infielder.main_rating == 94]
-#
-# print(np.shape(infielders))
-#
-time0 = time.time()
-for x in leagues:
-    league_rating = league_ratings[x]
-    x_league = League(x)
-    local_session.add(x_league)
-    local_session.commit()
-    print(f"Done with league {time.time() - time0}")
-    for inf in infielders:
-        time1 = time.time()
-        rating_inf = []
-        while True:
-            rating = np.around(np.random.normal(league_rating, 1.5))
-            rating_inf = [infielder for infielder in inf if infielder.main_rating == rating]
-            print(f"Done with list comp {time.time() - time1}")
-            if len(rating_inf) > 0:
-                break
-        player = random.choice(rating_inf)  # Choose a random player from list
-
-raise Exception
-
-# league_rating = 60
-# for inf in infielders:
-#     rating_inf = []
-#     while True:
-#         rating = np.around(np.random.normal(league_rating, 1.5))
-#         rating_inf = [infielder for infielder in inf if infielder.main_rating == rating]
-#         if len(rating_inf) > 0:
-#             break
-#     player = random.choice(rating_inf)
-
-# print(f"This is the time ->> {time.time() - time1}")
-# time0 = time.time()
-raise Exception
 # 7min 27sec on M1 Pro Macbook Pro
 for x in leagues:
-    league_rating = league_ratings[x]
     x_league = League(x)
     local_session.add(x_league)
     local_session.commit()
+    # print(f"{x} league created")
+
+for x in leagues:
     x_league = local_session.query(League).filter(League.name == x).all()[0]
 
     for y in range(30):
@@ -132,25 +93,30 @@ for x in leagues:
         y_team = Team(team_name, x_league.id)
         local_session.add(y_team)
         local_session.commit()
-        y_team = local_session.query(Team).filter(Team.name == y_team.name).all()[0]
+        # print(f"{y_team.name} team created")
 
+for x in leagues:
+    x_league = local_session.query(League).filter(League.name == x).all()[0]
+    league_rating = league_ratings[x]
+    league_teams = local_session.query(Team).filter(Team.league == x_league.id).all()
+    for team in league_teams:
         for count, inf in enumerate(infielders):
             rating_inf = []
             while True:
                 rating = np.around(np.random.normal(league_rating, 1.5))
                 time1 = time.time()
-                print(f"Time up until crap {time1-time0}")
+                # print(f"Time up until crap {time.time() - time0}")
                 rating_inf = [infielder for infielder in inf if infielder.main_rating == rating]
-                print(f"Why is this so long ->> {time.time() - time1}")
+                # print(f"Why is this so long ->> {time.time() - time1}")
                 if len(rating_inf) > 0:
                     break
 
             player = random.choice(rating_inf)
-            player.current_team = y_team.id
+            player.current_team = team.id
             on_team.append(player.id)
             infielders[count].remove(player)
 
-        print(f"Infielders Created")
+        # print(f"Infielders Created")
 
         for count, inf in enumerate(outfielders):
             rating_outf = []
@@ -161,11 +127,11 @@ for x in leagues:
                     break
 
             player = random.choice(rating_outf)
-            player.current_team = y_team.id
+            player.current_team = team.id
             on_team.append(player.id)
             outfielders[count].remove(player)
 
-        print(f"Outfielders Created")
+        # print(f"Outfielders Created")
 
         for start in range(5):
             rating_start = []
@@ -176,11 +142,11 @@ for x in leagues:
                     break
 
             player = random.choice(rating_start)
-            player.current_team = y_team.id
+            player.current_team = team.id
             on_team.append(player.id)
             sp.remove(player)
 
-        print(f"Starters Created")
+        # print(f"Starters Created")
 
         for start in range(8):
             rating_relieve = []
@@ -191,14 +157,13 @@ for x in leagues:
                     break
 
             player = random.choice(rating_relieve)
-            player.current_team = y_team.id
+            player.current_team = team.id
             on_team.append(player.id)
             rp.remove(player)
 
-        print(f"Relievers Created")
+        # print(f"Relievers Created")
 
-        print(f"Team {y} created")
+        # print(f"Team {team.name} populated")
 
     local_session.commit()
-    print(f"{x} League Created")
-
+    # print(f"{x} League populated")

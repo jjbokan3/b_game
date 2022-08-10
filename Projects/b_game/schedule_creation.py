@@ -22,6 +22,7 @@ leagues = {
 
 num_weeks = 162
 
+
 def create_schedule(team_list, num_weeks):
     """
     Create a schedule for the given teams

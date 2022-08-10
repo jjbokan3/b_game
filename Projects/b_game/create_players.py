@@ -22,4 +22,4 @@ for p in df_dict:
 
     local_session.commit()
 
-    print(f"Added {p['name']}")
+    # print(f"Added {p['name']}")
