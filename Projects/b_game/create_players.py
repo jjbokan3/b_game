@@ -16,7 +16,7 @@ for p in df_dict:
         new_user = Batter(p['name'], p['parent_position'], p['position'], p['main_rating'], p['handed'], p['attributes'], False, None, True, None)
 
     else:
-        new_user = Pitcher(p['name'], p['parent_position'], p['position'], p['main_rating'], p['handed'], p['attributes'], False, None, 5, None)
+        new_user = Pitcher(p['name'], p['parent_position'], p['position'], p['main_rating'], p['handed'], p['attributes'], False, None, 100, None)
 
     local_session.add(new_user)
 

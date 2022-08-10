@@ -39,10 +39,11 @@ randomly select 13 batters, 5 starters, and 8 relievers to each team
 all_batters = local_session.query(Batter).all()
 all_pitchers = local_session.query(Pitcher).all()
 
-infield = ['C', '1B', '2B', '2B', '3B', 'SS']
-outfield = ['LF', 'CF', 'RF']
-infield_choices = ['C', 'C', '1B', '2B', '2B', '3B', 'SS', 'LF', 'CF', 'RF', np.random.choice(infield)[0], np.random.choice(infield)[0]]
-outfield_choices = ['LF', 'CF', 'RF', np.random.choice(outfield)[0], np.random.choice(outfield)[0]]
+infield_choices = ['1B', '2B', '3B', 'SS']
+outfield_choices = ['LF', 'CF', 'RF']
+
+infield = ['C', 'C', '1B', '2B', '3B', 'SS', np.random.choice(infield_choices), np.random.choice(infield_choices)]
+outfield = ['LF', 'CF', 'RF', np.random.choice(outfield_choices), np.random.choice(outfield_choices)]
 starters = ['SP', 'SP', 'SP', 'SP', 'SP']
 relievers = ['RP', 'RP', 'RP', 'RP', 'RP', 'RP', 'RP', 'RP']
 
@@ -57,10 +58,20 @@ ss = [batter for batter in all_batters if batter.position == 'SS']
 sp = [pitcher for pitcher in all_pitchers if pitcher.position == 'SP']
 rp = [pitcher for pitcher in all_pitchers if pitcher.position == 'RP']
 
+all_players = {
+    'C': c,
+    '1B': b1,
+    '2B': b2,
+    '3B': b3,
+    'SS': ss,
+    'LF': lf,
+    'CF': cf,
+    'RF': rf,
+    'SP': sp,
+    'RP': rp
+}
 
-infielders = [c, b1, b2, b3, ss]
-outfielders = [lf, cf, rf]
-pitchers = [sp, rp]
+
 on_team = []
 
 # TODO: Figure out how to add players to teams
@@ -100,13 +111,13 @@ for x in leagues:
     league_rating = league_ratings[x]
     league_teams = local_session.query(Team).filter(Team.league == x_league.id).all()
     for team in league_teams:
-        for count, inf in enumerate(infielders):
+        for inf in infield:
             rating_inf = []
             while True:
                 rating = np.around(np.random.normal(league_rating, 1.5))
                 time1 = time.time()
                 # print(f"Time up until crap {time.time() - time0}")
-                rating_inf = [infielder for infielder in inf if infielder.main_rating == rating]
+                rating_inf = [infielder for infielder in all_players[inf] if infielder.main_rating == rating]
                 # print(f"Why is this so long ->> {time.time() - time1}")
                 if len(rating_inf) > 0:
                     break
@@ -114,52 +125,52 @@ for x in leagues:
             player = random.choice(rating_inf)
             player.current_team = team.id
             on_team.append(player.id)
-            infielders[count].remove(player)
+            all_players[inf].remove(player)
 
         # print(f"Infielders Created")
 
-        for count, inf in enumerate(outfielders):
+        for out in outfield:
             rating_outf = []
             while True:
                 rating = np.around(np.random.normal(league_rating, 1.5))
-                rating_outf = [outfielder for outfielder in inf if outfielder.main_rating == rating]
+                rating_outf = [outfielder for outfielder in all_players[out] if outfielder.main_rating == rating]
                 if len(rating_outf) > 0:
                     break
 
             player = random.choice(rating_outf)
             player.current_team = team.id
             on_team.append(player.id)
-            outfielders[count].remove(player)
+            all_players[out].remove(player)
 
         # print(f"Outfielders Created")
 
-        for start in range(5):
+        for start in starters:
             rating_start = []
             while True:
                 rating = np.around(np.random.normal(league_rating, 1.5))
-                rating_start = [starter for starter in sp if starter.main_rating == rating]
+                rating_start = [starter for starter in all_players[start] if starter.main_rating == rating]
                 if len(rating_start) > 0:
                     break
 
             player = random.choice(rating_start)
             player.current_team = team.id
             on_team.append(player.id)
-            sp.remove(player)
+            all_players[start].remove(player)
 
         # print(f"Starters Created")
 
-        for start in range(8):
+        for relieve in relievers:
             rating_relieve = []
             while True:
                 rating = np.around(np.random.normal(league_rating, 1.5))
-                rating_relieve = [reliever for reliever in rp if reliever.main_rating == rating]
+                rating_relieve = [reliever for reliever in all_players[relieve] if reliever.main_rating == rating]
                 if len(rating_relieve) > 0:
                     break
 
             player = random.choice(rating_relieve)
             player.current_team = team.id
             on_team.append(player.id)
-            rp.remove(player)
+            all_players[relieve].remove(player)
 
         # print(f"Relievers Created")
 
@@ -167,3 +178,36 @@ for x in leagues:
 
     local_session.commit()
     # print(f"{x} League populated")
+
+
+# Set Default Lineup for teams
+
+teams = local_session.query(Team).all()
+
+# Add lineup spot for batters
+for team in teams:
+    batters = local_session.query(Batter).filter(Batter.current_team == team.id).all()
+    batter_weights = {batter.id: batter.attributes['contact'] * .5 + batter.attributes['power'] * .5 for batter in batters}
+    player_weights_sorted = {k: v for k, v in sorted(batter_weights.items(), key=lambda item: item[1], reverse=True)}
+    for count, batter_id in enumerate(player_weights_sorted.keys()):
+        batter = next(batter for batter in batters if batter.id == batter_id)
+        batter.num_in_lineup = count + 1
+
+# Add pitching priority for starters
+for team in teams:
+    pitchers = local_session.query(Pitcher).filter(Pitcher.current_team == team.id, Pitcher.position == 'SP').all()
+    pitchers.sort(key=lambda x: x.main_rating, reverse=True)
+    for count, pitcher in enumerate(pitchers):
+        pitcher.pitcher_priority = count + 1
+
+# Add pitching priority for relievers
+for team in teams:
+    pitchers = local_session.query(Pitcher).filter(Pitcher.current_team == team.id, Pitcher.position == 'RP').all()
+    pitchers.sort(key=lambda x: x.main_rating, reverse=True)
+    for count, pitcher in enumerate(pitchers):
+        pitcher.pitcher_priority = count + 1
+
+local_session.commit()
+
+# TODO: Starting pitching and relievers
+# TODO: Bench bats? What the point of an AI team that has bench bats?

@@ -233,13 +233,13 @@ class Pitcher(Player):
 
     __tablename__ = 'pitchers'
     id = Column(Integer, ForeignKey('players.id'), primary_key=True)
-    days_rest = Column(Integer)
+    energy = Column(Integer)
     pitcher_priority = Column(Integer, nullable=True)
 
-    def __init__(self, name, parent_position, position, main_rating, handed, attributes, injured, current_team, days_rest: int, pitcher_priority):
+    def __init__(self, name, parent_position, position, main_rating, handed, attributes, injured, current_team, energy: int, pitcher_priority):
         super().__init__(name, parent_position, position, main_rating, handed, attributes, injured, current_team)
 
-        self.days_rest = days_rest
+        self.energy = energy
         self.pitcher_priority = pitcher_priority
 
 
