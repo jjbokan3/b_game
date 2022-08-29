@@ -42,8 +42,6 @@ all_pitchers = local_session.query(Pitcher).all()
 infield_choices = ['1B', '2B', '3B', 'SS']
 outfield_choices = ['LF', 'CF', 'RF']
 
-infield = ['C', 'C', '1B', '2B', '3B', 'SS', np.random.choice(infield_choices), np.random.choice(infield_choices)]
-outfield = ['LF', 'CF', 'RF', np.random.choice(outfield_choices), np.random.choice(outfield_choices)]
 starters = ['SP', 'SP', 'SP', 'SP', 'SP']
 relievers = ['RP', 'RP', 'RP', 'RP', 'RP', 'RP', 'RP', 'RP']
 
@@ -111,6 +109,7 @@ for x in leagues:
     league_rating = league_ratings[x]
     league_teams = local_session.query(Team).filter(Team.league == x_league.id).all()
     for team in league_teams:
+        infield = ['C', 'C', '1B', '2B', '3B', 'SS', np.random.choice(infield_choices), np.random.choice(infield_choices)]
         for inf in infield:
             rating_inf = []
             while True:
@@ -129,6 +128,7 @@ for x in leagues:
 
         # print(f"Infielders Created")
 
+        outfield = ['LF', 'CF', 'RF', np.random.choice(outfield_choices), np.random.choice(outfield_choices)]
         for out in outfield:
             rating_outf = []
             while True:

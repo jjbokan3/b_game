@@ -265,9 +265,9 @@ class Game(Base):
     season_id = Column(Integer, ForeignKey('seasons.year'), nullable=False)
     home_score = Column(Integer, nullable=False)
     away_score = Column(Integer, nullable=False)
-    date = Column(DateTime, nullable=False)
+    date = Column(DateTime, nullable=True)
 
-    def __init__(self, home_team, away_team, season_id, home_score, away_score, date):
+    def __init__(self, home_team, away_team, season_id, home_score=0, away_score=0, date=None):
         self.home_team = home_team
         self.away_team = away_team
         self.season_id = season_id
@@ -301,7 +301,7 @@ class PitcherGameStats(Base):
     runs = Column(Integer)
     walks = Column(Integer)
 
-    def __init__(self, pitcher_id, game_id, innings_pitched, wins, losses, holds, saves, singles, doubles, triples, home_runs, runs, walks):
+    def __init__(self, pitcher_id, game_id, innings_pitched=0, wins=0, losses=0, holds=0, saves=0, singles=0, doubles=0, triples=0, home_runs=0, runs=0, walks=0):
         self.pitcher_id = pitcher_id
         self.game_id = game_id
         self.innings_pitched = innings_pitched
@@ -344,7 +344,7 @@ class PitcherGameStats(Base):
             return self.__add__(other)
 
 
-class BatterStatsGame(Base):
+class BatterGameStats(Base):
 
     __tablename__='batter_stats_game'
     id = Column(Integer, primary_key=True)
@@ -362,7 +362,7 @@ class BatterStatsGame(Base):
     caught_stealing = Column(Integer)
     strikeouts = Column(Integer)
 
-    def __init__(self, batter_id, game_id, at_bats, runs, rbis, singles, doubles, triples, home_runs, walks, stolen_bases, caught_stealing, strikeouts):
+    def __init__(self, batter_id, game_id, at_bats=0, runs=0, rbis=0, singles=0, doubles=0, triples=0, home_runs=0, walks=0, stolen_bases=0, caught_stealing=0, strikeouts=0):
 
         self.batter_id = batter_id
         self.game_id = game_id
@@ -377,6 +377,7 @@ class BatterStatsGame(Base):
         self.stolen_bases = stolen_bases
         self.caught_stealing = caught_stealing
         self.strikeouts = strikeouts
+        self.plate_appearances = self.at_bats + self.walks
         self.obp = self.calc_obp()
         self.slg = self.calc_slg()
         self.ops = self.obp + self.slg
@@ -403,7 +404,7 @@ class BatterStatsGame(Base):
         if self.batter_id != other.batter_id:
             raise Exception("Cannot aggregate stats from different players!")
         else:
-            return BatterStatsGame(self.batter_id, self.game_id, self.singles + other.singles, self.doubles + other.doubles, self.triples + other.triples, self.home_runs + other.home_runs, self.walks + other.walks, self.at_bats + other.at_bats)
+            return BatterGameStats(self.batter_id, self.game_id, self.singles + other.singles, self.doubles + other.doubles, self.triples + other.triples, self.home_runs + other.home_runs, self.walks + other.walks, self.at_bats + other.at_bats)
 
     def __str__(self):
         return f"Player ID: {self.batter_id} Game ID: {self.game_id}"
