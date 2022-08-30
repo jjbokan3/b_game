@@ -185,7 +185,7 @@ for x in leagues:
 teams = local_session.query(Team).all()
 
 # Add lineup spot for batters
-for team in teams:
+for team in teams:  # TODO: Ensure each team has a lineup filled with each position
     batters = local_session.query(Batter).filter(Batter.current_team == team.id).all()
     batter_weights = {batter.id: batter.attributes['contact'] * .5 + batter.attributes['power'] * .5 for batter in batters}
     player_weights_sorted = {k: v for k, v in sorted(batter_weights.items(), key=lambda item: item[1], reverse=True)}

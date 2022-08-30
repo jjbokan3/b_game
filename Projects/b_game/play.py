@@ -1,6 +1,6 @@
-from typing import List
+# from typing import List
 
-from Projects.b_game.main import PitcherGameStats, BatterGameStats
+# from Projects.b_game.main import PitcherGameStats, BatterGameStats
 from main import *
 
 import collections
@@ -41,7 +41,7 @@ def play(home_team_id: int, away_team_id: int):
     current_game = Game(home_team_id, away_team_id, current_year)
     local_session.add(current_game)
     local_session.commit()
-    current_game = local_session.query(Game).filter_by(home_team_id=home_team_id, away_team_id=away_team_id, season_id=current_year).first()
+    current_game = local_session.query(Game).filter_by(home_team=home_team_id, away_team=away_team_id, season_id=current_year).first()
 
     max_outs = 54
     total_outs = 0
@@ -50,9 +50,6 @@ def play(home_team_id: int, away_team_id: int):
     home_pitch_count = 0
     home_batter = 0
     away_batter = 0
-    next_home_batter = home_batter % 9
-    next_away_batter = away_batter % 9
-    reliever_number = 0
     home_score = 0
     away_score = 0
     outcome = ''
@@ -79,42 +76,52 @@ def play(home_team_id: int, away_team_id: int):
     home_relievers_stats: list[PitcherGameStats] = [PitcherGameStats(pitcher.id, current_game.id) for pitcher in home_relievers]
     away_relievers_stats: list[PitcherGameStats] = [PitcherGameStats(pitcher.id, current_game.id) for pitcher in away_relievers]
 
+    for x in [home_batters_stats, away_batters_stats, home_starters_stats, away_starters_stats, home_relievers_stats, away_relievers_stats]:
+        for y in x:
+            local_session.add(y)
+
+    local_session.commit()
+
     home_pitcher = home_starters[0]
     away_pitcher = away_starters[0]
     home_reliever_number = 0
     away_reliever_number = 0
 
     while total_outs != max_outs:
-        while inning_outs != 3:
+        while inning_outs < 3:
             if home_hitting:
-                outcome, pitch_count_inc = play_ball(away_pitcher, home_batters[next_home_batter])
+                outcome, pitch_count_inc = play_ball(away_pitcher, home_batters[home_batter % 9])
                 if away_reliever_number == 0:
                     current_pitcher_stats = [pitcher_stats for pitcher_stats in away_starters_stats if pitcher_stats.pitcher_id == away_pitcher.id][0]
                 else:
                     current_pitcher_stats = [pitcher_stats for pitcher_stats in away_relievers_stats if pitcher_stats.pitcher_id == away_pitcher.id][0]
-                bases, away_pitch_count, home_score, away_score = outcome_modifier(outcome, bases, away_pitch_count, pitch_count_inc, home_score, away_score, home_hitting, inning_outs, home_batters[next_home_batter], away_pitcher, current_pitcher_stats, home_batters_stats)
+                bases, away_pitch_count, home_score, away_score, inning_outs = outcome_modifier(outcome, bases, away_pitch_count, pitch_count_inc, home_score, away_score, home_hitting, inning_outs, away_pitcher, home_batters[home_batter % 9], current_pitcher_stats, home_batters_stats)
                 home_batter += 1
-                if away_pitcher.attributes['position'] == 'SP' and away_pitch_count > starter_pitch_limit:
+                if away_pitcher.position == 'SP' and away_pitch_count > starter_pitch_limit:
                     away_pitcher = away_relievers[away_reliever_number]
-                    reliever_number += 1
-                elif away_pitcher.attributes['position'] == 'RP' and away_pitch_count > reliever_pitch_limit:
+                    away_reliever_number += 1
+                    away_pitch_count = 0
+                elif away_pitcher.position == 'RP' and away_pitch_count > reliever_pitch_limit:
                     away_pitcher = away_relievers[away_reliever_number]
-                    reliever_number += 1
+                    away_reliever_number += 1
+                    away_pitch_count = 0
 
             else:
-                outcome, pitch_count_inc = play_ball(home_pitcher, away_batters[next_away_batter])
+                outcome, pitch_count_inc = play_ball(home_pitcher, away_batters[away_batter % 9])
                 if home_reliever_number == 0:
                     current_pitcher_stats = [pitcher_stats for pitcher_stats in home_starters_stats if pitcher_stats.pitcher_id == home_pitcher.id][0]
                 else:
                     current_pitcher_stats = [pitcher_stats for pitcher_stats in home_relievers_stats if pitcher_stats.pitcher_id == home_pitcher.id][0]
-                bases, home_pitch_count, home_score, away_score = outcome_modifier(outcome, bases, home_pitch_count, pitch_count_inc, home_score, away_score, home_hitting, inning_outs, away_batters[next_away_batter], home_pitcher, current_pitcher_stats, away_batters_stats)
+                bases, home_pitch_count, home_score, away_score, inning_outs = outcome_modifier(outcome, bases, home_pitch_count, pitch_count_inc, home_score, away_score, home_hitting, inning_outs, home_pitcher, away_batters[away_batter % 9], current_pitcher_stats, away_batters_stats)
                 away_batter += 1
-                if home_pitcher.attributes['position'] == 'SP' and home_pitch_count > starter_pitch_limit:
+                if home_pitcher.position == 'SP' and home_pitch_count > starter_pitch_limit:
                     home_pitcher = home_relievers[home_reliever_number]
-                    reliever_number += 1
-                elif home_pitcher.attributes['position'] == 'RP' and home_pitch_count > reliever_pitch_limit:
+                    home_reliever_number += 1
+                    home_pitch_count = 0
+                elif home_pitcher.position == 'RP' and home_pitch_count > reliever_pitch_limit:
                     home_pitcher = home_relievers[home_reliever_number]
-                    reliever_number += 1
+                    home_reliever_number += 1
+                    home_pitch_count = 0
 
         home_hitting = not home_hitting
         bases = {
@@ -122,6 +129,7 @@ def play(home_team_id: int, away_team_id: int):
             '2nd': None,
             '3rd': None,
         }
+        total_outs += inning_outs
         inning_outs = 0
 
     if home_score > away_score:
@@ -155,7 +163,7 @@ def outcome_modifier(outcome, bases, pitch_count, pitch_count_inc, home_score, a
         elif outcome == 'triple':
             bases['3rd'] = batter.id
 
-        elif outcome == 'hr':
+        elif outcome == 'home_run':
             # TODO: Implement runs
             if home_hitting:
                 home_score += 1
@@ -185,7 +193,7 @@ def outcome_modifier(outcome, bases, pitch_count, pitch_count_inc, home_score, a
             else:
                 away_score += 1
 
-        elif outcome == 'hr':
+        elif outcome == 'home_run':
             scorers.extend([bases['1st'], batter.id])
             bases['1st'] = None
             if home_hitting:
@@ -227,7 +235,7 @@ def outcome_modifier(outcome, bases, pitch_count, pitch_count_inc, home_score, a
             else:
                 away_score += 1
 
-        elif outcome == 'hr':
+        elif outcome == 'home_run':
             scorers.extend([bases['2nd'], batter.id])
             bases['2nd'] = None
             if home_hitting:
@@ -269,7 +277,7 @@ def outcome_modifier(outcome, bases, pitch_count, pitch_count_inc, home_score, a
             else:
                 away_score += 1
 
-        elif outcome == 'hr':
+        elif outcome == 'home_run':
             scorers.extend([bases['3rd'], batter.id])
             bases['3rd'] = None
             if home_hitting:
@@ -311,17 +319,17 @@ def outcome_modifier(outcome, bases, pitch_count, pitch_count_inc, home_score, a
             bases['3rd'] = batter.id
             bases['2nd'] = None
             bases['1st'] = None
-            bases = {
-                '1st': False,
-                '2nd': False,
-                '3rd': True
-            }
+            # bases = {
+            #     '1st': False,
+            #     '2nd': False,
+            #     '3rd': True
+            # }
             if home_hitting:
                 home_score += 2
             else:
                 away_score += 2
 
-        elif outcome == 'hr':
+        elif outcome == 'home_run':
             scorers.extend([bases['2nd'], bases['1st'], batter.id])
             bases['2nd'] = None
             bases['1st'] = None
@@ -367,7 +375,7 @@ def outcome_modifier(outcome, bases, pitch_count, pitch_count_inc, home_score, a
             else:
                 away_score += 2
 
-        elif outcome == 'hr':
+        elif outcome == 'home_run':
             scorers.extend([bases['3rd'], bases['2nd'], batter.id])
             bases['3rd'] = None
             bases['2nd'] = None
@@ -417,7 +425,7 @@ def outcome_modifier(outcome, bases, pitch_count, pitch_count_inc, home_score, a
             else:
                 away_score += 2
 
-        elif outcome == 'hr':
+        elif outcome == 'home_run':
             scorers.extend([bases['3rd'], bases['1st'], batter.id])
             bases['3rd'] = None
             bases['1st'] = None
@@ -472,7 +480,7 @@ def outcome_modifier(outcome, bases, pitch_count, pitch_count_inc, home_score, a
             else:
                 away_score += 3
 
-        elif outcome == 'hr':
+        elif outcome == 'home_run':
             scorers.extend([bases['3rd'], bases['2nd'], bases['1st'], batter.id])
             bases['3rd'] = None
             bases['2nd'] = None
@@ -485,29 +493,31 @@ def outcome_modifier(outcome, bases, pitch_count, pitch_count_inc, home_score, a
         elif outcome == 'out':
             inning_outs += 1
 
-    pitch_count += pitch_count_inc
-
     # Updating pitcher and batter game stats
 
     # Update batter with what hit/out he got
     current_batter_stats = [batter_stats for batter_stats in batters_stats if batter_stats.batter_id == batter.id][0]
     current_batter_stats.rbis += len(scorers)
-    current_batter_stats.runs += 1 if batter.id in scorers else None
-    current_batter_stats.at_bats += 1 if outcome != 'walk' else None
+    if batter.id in scorers:
+        current_batter_stats.runs += 1
+    if outcome != 'walk':
+        current_batter_stats.at_bats += 1
     outcome_plural = outcome + 's'
-    setattr(current_batter_stats, outcome_plural, getattr(current_batter_stats, outcome_plural) + 1)
+    if outcome_plural != 'outs':
+        setattr(current_batter_stats, outcome_plural, getattr(current_batter_stats, outcome_plural) + 1)
 
     # Updates runners on base with whether they got a run or not
     if len(scorers) != 0:
-        scorer_stats = [runner_stats for runner_stats in batters_stats if runner_stats.runner_id in scorers]
+        scorer_stats = [runner_stats for runner_stats in batters_stats if runner_stats.batter_id in scorers]
         for scorer in scorer_stats:
             scorer.runs += 1
     # Update pitcher with what they got (strikeout, walk, hit, etc)
-    setattr(pitcher_stats, outcome_plural, getattr(pitcher_stats, outcome_plural) + 1)
+    if outcome_plural != 'outs':
+        setattr(pitcher_stats, outcome_plural, getattr(pitcher_stats, outcome_plural) + 1)
     pitcher_stats.pitches += pitch_count_inc
     pitch_count += pitch_count_inc
 
-    return bases, pitch_count, home_score, away_score
+    return bases, pitch_count, home_score, away_score, inning_outs
 
 
 def play_ball(pitcher: Pitcher, batter: Batter):
@@ -515,12 +525,12 @@ def play_ball(pitcher: Pitcher, batter: Batter):
     single = ma["1B"] * (batter.attributes['contact'] / pitcher.attributes['stuff'])
     double = ma["2B"] * (batter.attributes['contact'] / pitcher.attributes['stuff'])
     triple = ma["3B"] * ((batter.attributes['speed/stealing'] / 80 + batter.attributes['power'] / 90) / 2)
-    hr = ma["HR"] * (batter.attributes['power'] / pitcher.attributes['movement'])
+    home_run = ma["HR"] * (batter.attributes['power'] / pitcher.attributes['movement'])
     walk = ma['BB'] * (batter.attributes['eye'] / pitcher.attributes['control'])
-    out = ma['PA'] - (single+double+triple+hr+walk)
+    out = ma['PA'] - (single+double+triple+home_run+walk)
     pitches = (ma['avg_pitches'] + np.random.randint(-3, 2))
 
-    outcome = random.choices(['single', 'double', 'triple', 'hr', 'walk', 'out'], [single, double, triple, hr, walk, out])
+    outcome = random.choices(['single', 'double', 'triple', 'home_run', 'walk', 'out'], [single, double, triple, home_run, walk, out])
     # TODO: Player by season table (each row is a player and the year of the stats -- composite key)
     #       Player by season-game table (each row is a players's stats within a specific game
     #       Add onto season table while create new entry for each game
@@ -528,21 +538,21 @@ def play_ball(pitcher: Pitcher, batter: Batter):
 
     # TODO: Implement strikeout vs flyout/groundout (and possible error?)
     # if outcome == 'out':
-
-    return outcome, pitches
+    return outcome[0], pitches
 
 
 leagues = [1, 2, 3, 4, 5]
 
 for league in leagues:
 
-    week_schedule = local_session.query(LeagueSeasonSchedule).filter(LeagueSeasonSchedule.league_id == league).one().schedule[0]
+    week_schedule = local_session.query(LeagueSeasonSchedule).filter(LeagueSeasonSchedule.league_id == league).one().schedule[0:5]
 
-    for game in week_schedule:
+    for week in week_schedule:
+        for game in week:
 
-        away_team_id = game[0]
-        home_team_id = game[1]
+            away_team_id = game[0]
+            home_team_id = game[1]
 
-        play(game[0], game[1])
-
-        print(f'{away_team_id} {home_team_id} done!')
+            play(home_team_id, away_team_id)
+            local_session.commit()
+        print(f"Week {week_schedule} done!!!")

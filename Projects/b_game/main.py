@@ -300,8 +300,9 @@ class PitcherGameStats(Base):
     home_runs = Column(Integer)
     runs = Column(Integer)
     walks = Column(Integer)
+    pitches = Column(Integer)
 
-    def __init__(self, pitcher_id, game_id, innings_pitched=0, wins=0, losses=0, holds=0, saves=0, singles=0, doubles=0, triples=0, home_runs=0, runs=0, walks=0):
+    def __init__(self, pitcher_id, game_id, innings_pitched=0, wins=0, losses=0, holds=0, saves=0, singles=0, doubles=0, triples=0, home_runs=0, runs=0, walks=0, pitches=0):
         self.pitcher_id = pitcher_id
         self.game_id = game_id
         self.innings_pitched = innings_pitched
@@ -315,14 +316,21 @@ class PitcherGameStats(Base):
         self.home_runs = home_runs
         self.runs = runs
         self.walks = walks
+        self.pitches = pitches
         self.era = self.calc_era()
         self.whip = self.calc_whip()
 
     def calc_era(self):
-        return 9 * self.runs / self.innings_pitched
+        try:
+            return 9 * self.runs / self.innings_pitched
+        except ZeroDivisionError:
+            return 0
 
     def calc_whip(self):
-        return (self.hits + self.walks) / self.innings_pitched
+        try:
+            return (self.singles + self.doubles + self.triples + self.home_runs + self.walks) / self.innings_pitched
+        except ZeroDivisionError:
+            return 0
 
     def __add__(self, other):
         if self.batter_id != other.batter_id:
@@ -389,7 +397,11 @@ class BatterGameStats(Base):
         Returns:
             On-Base-Percentage
         """
-        return (self.singles + self.doubles + self.triples + self.home_runs + self.walks) / (self.at_bats + self.walks)
+        try:
+            return (self.singles + self.doubles + self.triples + self.home_runs + self.walks) / (self.at_bats + self.walks)
+        except ZeroDivisionError:
+            return 0
+
 
     def calc_slg(self) -> float:
         """
@@ -398,7 +410,10 @@ class BatterGameStats(Base):
         Returns:
             Slugging
         """
-        return (self.singles + (self.doubles * 2) + (self.triples * 3) + (self.home_runs * 4)) / self.at_bats
+        try:
+            return (self.singles + (self.doubles * 2) + (self.triples * 3) + (self.home_runs * 4)) / self.at_bats
+        except ZeroDivisionError:
+            return 0
 
     def __add__(self, other):
         if self.batter_id != other.batter_id:
@@ -423,7 +438,7 @@ class Team(Base):
 
     __tablename__ = 'teams'
     id = Column(Integer, primary_key=True)
-    name = Column(String(50), nullable=False)
+    name = Column(String(100), nullable=False)
     league = Column(Integer, ForeignKey('leagues.id'), nullable=True)
     wins = Column(Integer, default=0)
     losses = Column(Integer, default=0)
