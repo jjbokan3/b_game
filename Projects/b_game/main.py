@@ -8,7 +8,7 @@ import pickle
 import datetime
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 from sqlalchemy import Column, String, DateTime, Integer, JSON, Boolean, ForeignKey, ARRAY, INTEGER, Sequence
 
 
@@ -212,6 +212,9 @@ class Player(Base):
     injured = Column(Boolean, nullable=False)
     current_team = Column(Integer, ForeignKey('teams.id'), nullable=True)
 
+    batters = relationship("Batter", backref="player")
+    pitchers = relationship("Pitcher", backref="player")
+
     def __init__(self, name: str, parent_position: str, position: str, main_rating: int, handed: str, attributes: dict, injured: bool, current_team: int):
         self.name = name
         self.main_rating = main_rating
@@ -236,11 +239,28 @@ class Pitcher(Player):
     energy = Column(Integer)
     pitcher_priority = Column(Integer, nullable=True)
 
+    pitcher_stats = relationship("PitcherGameStats", backref="pitchers")
+
     def __init__(self, name, parent_position, position, main_rating, handed, attributes, injured, current_team, energy: int, pitcher_priority):
         super().__init__(name, parent_position, position, main_rating, handed, attributes, injured, current_team)
 
         self.energy = energy
         self.pitcher_priority = pitcher_priority
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'parent_position': self.parent_position,
+            'position': self.position,
+            'main_rating': self.main_rating,
+            'handed': self.handed,
+            'attributes': self.attributes,
+            'injured': self.injured,
+            'current_team': self.current_team,
+            'energy': self.energy,
+            'pitcher_priority': self.pitcher_priority
+        }
 
 
 class Batter(Player):
@@ -250,11 +270,28 @@ class Batter(Player):
     switch = Column(Boolean, nullable=True)
     num_in_lineup = Column(Integer, nullable=True)
 
+    batter_stats = relationship("BatterGameStats", backref="batter")
+
     def __init__(self, name, parent_position, position, main_rating, handed, attributes, injured, current_team, switch, num_in_lineup):
         super().__init__(name, parent_position, position, main_rating, handed, attributes, injured, current_team)
 
         self.switch = switch
         self.num_in_lineup = num_in_lineup
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'parent_position': self.parent_position,
+            'position': self.position,
+            'main_rating': self.main_rating,
+            'handed': self.handed,
+            'attributes': self.attributes,
+            'injured': self.injured,
+            'current_team': self.current_team,
+            'switch': self.switch,
+            'num_in_lineup': self.num_in_lineup
+        }
 
 
 class Game(Base):
@@ -332,6 +369,26 @@ class PitcherGameStats(Base):
         except ZeroDivisionError:
             return 0
 
+    def to_dict(self):
+        return {
+            'pitcher_id': self.pitcher_id,
+            'game_id': self.game_id,
+            'innings_pitched': self.innings_pitched,
+            'wins': self.wins,
+            'losses': self.losses,
+            'holds': self.holds,
+            'saves': self.saves,
+            'singles': self.singles,
+            'doubles': self.doubles,
+            'triples': self.triples,
+            'home_runs': self.home_runs,
+            'runs': self.runs,
+            'walks': self.walks,
+            'pitches': self.pitches,
+            'era': self.era,
+            'whip': self.whip
+        }
+
     def __add__(self, other):
         if self.batter_id != other.batter_id:
             raise Exception("Cannot aggregate stats from different players!")
@@ -354,7 +411,7 @@ class PitcherGameStats(Base):
 
 class BatterGameStats(Base):
 
-    __tablename__='batter_stats_game'
+    __tablename__ = 'batter_stats_game'
     id = Column(Integer, primary_key=True)
     batter_id = Column(Integer, ForeignKey('batters.id'))
     game_id = Column(Integer, ForeignKey('games.id'))
@@ -415,17 +472,38 @@ class BatterGameStats(Base):
         except ZeroDivisionError:
             return 0
 
+    def to_dict(self) -> dict:
+        return {
+            'batter_id': self.batter.name,
+            'game_id': self.game_id,
+            'at_bats': self.at_bats,
+            'runs': self.runs,
+            'rbis': self.rbis,
+            'singles': self.singles,
+            'doubles': self.doubles,
+            'triples': self.triples,
+            'home_runs': self.home_runs,
+            'walks': self.walks,
+            'stolen_bases': self.stolen_bases,
+            'caught_stealing': self.caught_stealing,
+            'strikeouts': self.strikeouts,
+            'plate_appearances': self.plate_appearances,
+            'obp': self.obp,
+            'slg': self.slg,
+            'ops': self.ops
+        }
+
     def __add__(self, other):
         if self.batter_id != other.batter_id:
             raise Exception("Cannot aggregate stats from different players!")
         else:
-            return BatterGameStats(self.batter_id, self.game_id, self.singles + other.singles, self.doubles + other.doubles, self.triples + other.triples, self.home_runs + other.home_runs, self.walks + other.walks, self.at_bats + other.at_bats)
+            return BatterGameStats(self.batter_id, self.game_id, self.at_bats + other.at_bats, self.runs + other.runs, self.rbis + other.rbis, self.singles + other.singles, self.doubles + other.doubles, self.triples + other.triples, self.home_runs + other.home_runs, self.walks + other.walks, self.stolen_bases + other.stolen_bases, self.caught_stealing + other.caught_stealing, self.strikeouts + other.strikeouts)
 
     def __str__(self):
         return f"Player ID: {self.batter_id} Game ID: {self.game_id}"
 
     def __repr__(self):
-        return f"BatterStatsGame({self.batter_id}, {self.game_id}, {self.at_bats}, {self.runs}, {self.rbis}, {self.singles}, {self.doubles}, {self.triples}, {self.home_runs}, {self.walks}, {self.stolen_bases}, {self.caught_stealing}, {self.strikeouts})"
+        return f"BatterGameStats({self.batter_id}, {self.game_id}, {self.at_bats}, {self.runs}, {self.rbis}, {self.singles}, {self.doubles}, {self.triples}, {self.home_runs}, {self.walks}, {self.stolen_bases}, {self.caught_stealing}, {self.strikeouts})"
 
     def __radd__(self, other):
         if other == 0:
@@ -461,6 +539,7 @@ class League(Base):
     def __init__(self, name: str, schedule: list = None):
         self.name = name
         self.schedule = schedule
+
 
 class LeagueSeasonSchedule(Base):
 
