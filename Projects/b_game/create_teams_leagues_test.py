@@ -107,7 +107,7 @@ for x in leagues:
 for x in leagues:
     x_league = local_session.query(League).filter(League.name == x).all()[0]
     league_rating = league_ratings[x]
-    league_teams = local_session.query(Team).filter(Team.league == x_league.id).all()
+    league_teams = local_session.query(Team).filter(Team.league_id == x_league.id).all()
     for team in league_teams:
         infield = ['C', 'C', '1B', '2B', '3B', 'SS', np.random.choice(infield_choices), np.random.choice(infield_choices)]
         for inf in infield:

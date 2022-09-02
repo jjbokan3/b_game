@@ -173,6 +173,9 @@ def play(home_team_id: int, away_team_id: int):
         for pitcher in pitchers:
             local_session.delete(pitcher)
 
+    current_game.home_score = home_score
+    current_game.away_score = away_score
+
     local_session.commit()
 
 
@@ -601,3 +604,6 @@ for count, week in enumerate(week_schedule[:30]):
 
     print(f"Week {count + 1} complete!")
 
+    # TODO: Add week to game object to differentiate when teams play each other more than once
+    #       Use 'vars.json' to store the week number after you run a number of weeks of play
+    #       Figure out how to `effectively iterate weeks and update the given var in json file

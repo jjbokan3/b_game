@@ -212,8 +212,8 @@ class Player(Base):
     injured = Column(Boolean, nullable=False)
     current_team = Column(Integer, ForeignKey('teams.id'), nullable=True)
 
-    batters = relationship("Batter", backref="player")
-    pitchers = relationship("Pitcher", backref="player")
+    batters = relationship("Batter", backref="player", uselist=False)
+    pitchers = relationship("Pitcher", backref="player", uselist=False)
 
     def __init__(self, name: str, parent_position: str, position: str, main_rating: int, handed: str, attributes: dict, injured: bool, current_team: int):
         self.name = name
@@ -371,6 +371,7 @@ class PitcherGameStats(Base):
 
     def to_dict(self):
         return {
+            'pitcher_name': self.pitcher.name,
             'pitcher_id': self.pitcher_id,
             'game_id': self.game_id,
             'innings_pitched': self.innings_pitched,
@@ -393,8 +394,12 @@ class PitcherGameStats(Base):
         if self.batter_id != other.batter_id:
             raise Exception("Cannot aggregate stats from different players!")
         else:
-            return PitcherGameStats(self.pitcher_id, self.game_id, self.innings_pitched + other.innings_pitched, self.wins + other.wins, self.losses + other.losses, self.holds + other.holds, self.saves + other.saves, self.singles + other.singles, self.doubles + other.doubles, self.triples + other.triples, self.home_runs + other.home_runs, self.runs + other.runs, self.walks + other.walks)
+            result = PitcherGameStats(self.pitcher_id, self.game_id, self.innings_pitched + other.innings_pitched, self.wins + other.wins, self.losses + other.losses, self.holds + other.holds, self.saves + other.saves, self.singles + other.singles, self.doubles + other.doubles, self.triples + other.triples, self.home_runs + other.home_runs, self.runs + other.runs, self.walks + other.walks)
             # TODO: Configure how to add innings pitched regarding decimal notation
+            result.pitcher_id = self.pitcher_id
+            result.game_id = None
+            result.pitcher = self.pitcher
+            return result
 
     def __str__(self):
         return f"Pitcher ID: {self.pitcher_id} Game ID: {self.game_id}"
@@ -474,7 +479,8 @@ class BatterGameStats(Base):
 
     def to_dict(self) -> dict:
         return {
-            'batter_id': self.batter.name,
+            'batter name': self.batter.name,
+            'batter_id': self.batter_id,
             'game_id': self.game_id,
             'at_bats': self.at_bats,
             'runs': self.runs,
@@ -497,7 +503,12 @@ class BatterGameStats(Base):
         if self.batter_id != other.batter_id:
             raise Exception("Cannot aggregate stats from different players!")
         else:
-            return BatterGameStats(self.batter_id, self.game_id, self.at_bats + other.at_bats, self.runs + other.runs, self.rbis + other.rbis, self.singles + other.singles, self.doubles + other.doubles, self.triples + other.triples, self.home_runs + other.home_runs, self.walks + other.walks, self.stolen_bases + other.stolen_bases, self.caught_stealing + other.caught_stealing, self.strikeouts + other.strikeouts)
+            result = BatterGameStats(self.batter_id, self.game_id, self.at_bats + other.at_bats, self.runs + other.runs, self.rbis + other.rbis, self.singles + other.singles, self.doubles + other.doubles, self.triples + other.triples, self.home_runs + other.home_runs, self.walks + other.walks, self.stolen_bases + other.stolen_bases, self.caught_stealing + other.caught_stealing, self.strikeouts + other.strikeouts)
+            result.batter_id = self.batter_id
+            result.game_id = None
+            result.batter = self.batter
+            return result
+
 
     def __str__(self):
         return f"Player ID: {self.batter_id} Game ID: {self.game_id}"
@@ -517,9 +528,11 @@ class Team(Base):
     __tablename__ = 'teams'
     id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False)
-    league = Column(Integer, ForeignKey('leagues.id'), nullable=True)
+    league_id = Column(Integer, ForeignKey('leagues.id'), nullable=True)
     wins = Column(Integer, default=0)
     losses = Column(Integer, default=0)
+
+    players = relationship("Player", backref="team")
 
     def __init__(self, name: str, league: int, wins: int = 0, losses: int = 0):
         self.name = name
@@ -539,6 +552,8 @@ class League(Base):
     def __init__(self, name: str, schedule: list = None):
         self.name = name
         self.schedule = schedule
+
+    teams = relationship("Team", backref="league")
 
 
 class LeagueSeasonSchedule(Base):
