@@ -591,19 +591,34 @@ def play_ball(pitcher: Pitcher, batter: Batter):
 leagues = [1, 2, 3, 4, 5]
 
 
-week_schedule = local_session.query(LeagueSeasonSchedule).filter(LeagueSeasonSchedule.league_id == leagues[0]).one().schedule
-
-for count, week in enumerate(week_schedule[:30]):
-    for game in week:
-
-        away_team_id = game[0]
-        home_team_id = game[1]
-
-        play(home_team_id, away_team_id)
-        local_session.commit()
-
-    print(f"Week {count + 1} complete!")
+# week_schedule = local_session.query(LeagueSeasonSchedule).filter(LeagueSeasonSchedule.league_id == leagues[0]).one().schedule
+#
+# for count, week in enumerate(week_schedule[:30]):
+#     for game in week:
+#
+#         away_team_id = game[0]
+#         home_team_id = game[1]
+#
+#         play(home_team_id, away_team_id)
+#         local_session.commit()
+#
+#     print(f"Week {count + 1} complete!")
 
     # TODO: Add week to game object to differentiate when teams play each other more than once
     #       Use 'vars.json' to store the week number after you run a number of weeks of play
     #       Figure out how to `effectively iterate weeks and update the given var in json file
+
+def simulate_play(num_weeks, league_id):
+
+    week_schedule = local_session.query(LeagueSeasonSchedule).filter(LeagueSeasonSchedule.league_id == league_id).one().schedule
+
+    for count, week in enumerate(week_schedule[:num_weeks]):
+        for game in week:
+
+            away_team_id = game[0]
+            home_team_id = game[1]
+
+            play(home_team_id, away_team_id)
+            local_session.commit()
+
+        print(f"Week {count + 1} complete!")

@@ -13,11 +13,11 @@ all_leagues = local_session.query(League).all()
 all_leagues.sort(key=lambda x: x.id, reverse=True)
 
 leagues = {
-    1: [team.id for team in all_teams if team.league == 1],
-    2: [team.id for team in all_teams if team.league == 2],
-    3: [team.id for team in all_teams if team.league == 3],
-    4: [team.id for team in all_teams if team.league == 4],
-    5: [team.id for team in all_teams if team.league == 5],
+    1: [team.id for team in all_teams if team.league_id == 1],
+    2: [team.id for team in all_teams if team.league_id == 2],
+    3: [team.id for team in all_teams if team.league_id == 3],
+    4: [team.id for team in all_teams if team.league_id == 4],
+    5: [team.id for team in all_teams if team.league_id == 5],
 }
 
 num_weeks = 162

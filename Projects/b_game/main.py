@@ -212,8 +212,8 @@ class Player(Base):
     injured = Column(Boolean, nullable=False)
     current_team = Column(Integer, ForeignKey('teams.id'), nullable=True)
 
-    batters = relationship("Batter", backref="player", uselist=False)
-    pitchers = relationship("Pitcher", backref="player", uselist=False)
+    batter = relationship("Batter", backref="player", uselist=False)
+    pitcher = relationship("Pitcher", backref="player", uselist=False)
 
     def __init__(self, name: str, parent_position: str, position: str, main_rating: int, handed: str, attributes: dict, injured: bool, current_team: int):
         self.name = name
@@ -239,7 +239,7 @@ class Pitcher(Player):
     energy = Column(Integer)
     pitcher_priority = Column(Integer, nullable=True)
 
-    pitcher_stats = relationship("PitcherGameStats", backref="pitchers")
+    pitcher_stats = relationship("PitcherGameStats", backref="pitcher")
 
     def __init__(self, name, parent_position, position, main_rating, handed, attributes, injured, current_team, energy: int, pitcher_priority):
         super().__init__(name, parent_position, position, main_rating, handed, attributes, injured, current_team)
@@ -528,15 +528,15 @@ class Team(Base):
     __tablename__ = 'teams'
     id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False)
-    league_id = Column(Integer, ForeignKey('leagues.id'), nullable=True)
+    league_id = Column(Integer, ForeignKey('leagues.id'), nullable=False)
     wins = Column(Integer, default=0)
     losses = Column(Integer, default=0)
 
     players = relationship("Player", backref="team")
 
-    def __init__(self, name: str, league: int, wins: int = 0, losses: int = 0):
+    def __init__(self, name: str, league_id: int, wins: int = 0, losses: int = 0):
         self.name = name
-        self.league = league
+        self.league_id = league_id
         self.wins = wins
         self.losses = losses
 # TODO: Add team stats and structure for league stats (team and player)
@@ -548,12 +548,11 @@ class League(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(50), nullable=False)
     # division_list = Column(ARRAY(Integer))
+    teams = relationship("Team", backref="league")
 
     def __init__(self, name: str, schedule: list = None):
         self.name = name
         self.schedule = schedule
-
-    teams = relationship("Team", backref="league")
 
 
 class LeagueSeasonSchedule(Base):
