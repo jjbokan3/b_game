@@ -1,0 +1,61 @@
+OVERVIEW
+1. Give each player a rating 40-100
+2. Each rating is converted to 0-60
+3. Those ratings are elongated to 0-100
+4. Those ratings are used as probabilities each attribute is good
+	a. Rating for a guy is 94 - very good chance that he is has good contact
+5. Randomly choose (or through weights) the order of attributes that get picked
+    a. e.g. Speed/stealing -> contact -> fielding -> power
+6. After each one, the players value goes down for the remaining attributes
+7. Weights on each attribute will differ
+    a. power being more important than speed
+8. Choosing whether hitters are l/r and whether they hit better against same side
+
+
+Thoughts
+1. How to allow good hitters who are bad at other attributes
+2. Pitching?
+3. What are the distributions in need?
+	a. ie should 80% of people be on the slower end and the 20% have an exceptionally higher speed?
+4. Use python classes?
+5. Re-rate players based on their new attributes?
+6. Different ways to play?
+    - Primarily passive play
+    - Involved in more decisions
+    - Complete managerial game
+
+NOTES
+
+Leagues
+- 6/8 leagues
+- Each includes progressively better teams
+    - This avoids dynamically changing players on AI teams
+    - Each league is (like most elements) based on a normal distribution of ratings of players
+- Once you win the world series in the top league, you can opt to play against dynamically generated teams at the same level; you play that same group of teams until you win it again; you gain a badge for each of those wins
+
+
+Structure
+- players are Player objects who have all attributes associated with them
+- teams are Team objects that are composed of players and methods in association with other teams
+- leagues are leagure objects that are composed of a collection of teams
+- highest level is the save file for the game (as you can have multiple on each machine)
+
+
+Playing
+- Two ways: simple vs complex
+- Complex
+    - Each game is ran like any normal game
+    - At-bats
+        - Harder hit balls (player with more power) more likely to get throw on a ground ball,
+
+
+
+
+Game Overview
+1. League of teams (same format as mlb)
+2. You pick the name of your team (or randomly assign)
+3. You open packs of players that fill your initial roster
+4. Computer generated teams are given similar players
+5. Tiers (leauges) of computer generated squads
+
+
