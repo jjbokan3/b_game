@@ -3,6 +3,7 @@
 # from Projects.b_game.main import PitcherGameStats, BatterGameStats
 from main import *
 from operator import attrgetter
+import json
 
 import collections
 
@@ -63,8 +64,10 @@ def play(home_team_id: int, away_team_id: int):
 
     home_team = local_session.query(Team).filter(Team.id == home_team_id).first()
     away_team = local_session.query(Team).filter(Team.id == away_team_id).first()
-    home_batters = local_session.query(Batter).filter(Batter.current_team == home_team_id).all()
-    away_batters = local_session.query(Batter).filter(Batter.current_team == away_team_id).all()
+    home_batters = local_session.query(Batter).filter((Batter.current_team == home_team_id) & (Batter.num_in_lineup != None)).all()
+    away_batters = local_session.query(Batter).filter((Batter.current_team == away_team_id) & (Batter.num_in_lineup != None)) .all()
+    home_batters_bench = local_session.query(Batter).filter((Batter.current_team == home_team_id) & (Batter.num_in_lineup == None)).all()
+    away_batters_bench = local_session.query(Batter).filter((Batter.current_team == away_team_id) & (Batter.num_in_lineup == None)).all()
 
     home_starters = local_session.query(Pitcher).filter((Pitcher.current_team == home_team_id) & (Pitcher.position == 'SP')).all()
     away_starters = local_session.query(Pitcher).filter((Pitcher.current_team == away_team_id) & (Pitcher.position == 'SP')).all()
@@ -610,9 +613,22 @@ leagues = [1, 2, 3, 4, 5]
 
 def simulate_play(num_weeks, league_id):
 
+    with open('vars.json', 'r') as f:
+        data = json.load(f)
+
+    if data['current_week'] >= 162:
+        print("Season is over")
+        return
+    elif data['current_week'] + num_weeks > 162:
+        stop_week = 162
+        print("Season will be over")
+    else:
+        stop_week = data['current_week'] + num_weeks
+
+
     week_schedule = local_session.query(LeagueSeasonSchedule).filter(LeagueSeasonSchedule.league_id == league_id).one().schedule
 
-    for count, week in enumerate(week_schedule[:num_weeks]):
+    for count, week in enumerate(week_schedule[data['current_week']:stop_week]):
         for game in week:
 
             away_team_id = game[0]
@@ -622,3 +638,10 @@ def simulate_play(num_weeks, league_id):
             local_session.commit()
 
         print(f"Week {count + 1} complete!")
+
+    data['current_week'] = stop_week
+    with open('vars.json', 'w') as f:
+        json.dump(data, f)
+
+
+# simulate_play(x, leagues[0])

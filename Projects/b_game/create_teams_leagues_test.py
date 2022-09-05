@@ -2,6 +2,7 @@ from main import *
 import pandas as pd
 import random
 import time
+from collections import defaultdict
 
 local_session = Session(bind=engine)
 
@@ -185,13 +186,45 @@ for x in leagues:
 teams = local_session.query(Team).all()
 
 # Add lineup spot for batters
-for team in teams:  # TODO: Ensure each team has a lineup filled with each position
+# for team in teams:  # TODO: Ensure each team has a lineup filled with each position
+#     batters = local_session.query(Batter).filter(Batter.current_team == team.id).all()
+#     batter_weights = {batter.id: batter.attributes['contact'] * .5 + batter.attributes['power'] * .5 for batter in batters}
+#     player_weights_sorted = {k: v for k, v in sorted(batter_weights.items(), key=lambda item: item[1], reverse=True)}
+#     for count, batter_id in enumerate(player_weights_sorted.keys()):
+#         batter = next(batter for batter in batters if batter.id == batter_id)
+#         batter.num_in_lineup = count + 1
+
+# groups = defaultdict(list)
+# for obj in batters:
+#     groups[obj.position].append(obj)
+#
+# gx = [groups[x] for x in groups.values()]
+
+# df1 = pd.DataFrame([sum(list1).to_dict() for list1 in groups.values()])
+# df1.sort_values('ops', ascending=False, inplace=True)
+# print(df1.head(20))
+
+for team in teams:
     batters = local_session.query(Batter).filter(Batter.current_team == team.id).all()
-    batter_weights = {batter.id: batter.attributes['contact'] * .5 + batter.attributes['power'] * .5 for batter in batters}
-    player_weights_sorted = {k: v for k, v in sorted(batter_weights.items(), key=lambda item: item[1], reverse=True)}
-    for count, batter_id in enumerate(player_weights_sorted.keys()):
-        batter = next(batter for batter in batters if batter.id == batter_id)
-        batter.num_in_lineup = count + 1
+    batter_weights = {batter.id: [batter.attributes['contact'] * .5 + batter.attributes['power'] * .5, batter.position] for batter in batters}
+    batter_weights_sorted = {k: v for k, v in sorted(batter_weights.items(), key=lambda item: item[1][0], reverse=True)}
+    manditory_positions = ['C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF']
+    count = 1
+    dh = False
+    for [batter_id, values] in batter_weights_sorted.items():
+        if values[1] in manditory_positions:
+            batter = next(batter for batter in batters if batter.id == batter_id)
+            batter.num_in_lineup = count
+            count += 1
+            manditory_positions.remove(values[1])
+        elif not dh:
+            batter = next(batter for batter in batters if batter.id == batter_id)
+            batter.num_in_lineup = count
+            count += 1
+            dh = True
+
+
+
 
 # Add pitching priority for starters
 for team in teams:

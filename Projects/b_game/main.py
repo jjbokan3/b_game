@@ -539,7 +539,15 @@ class Team(Base):
         self.league_id = league_id
         self.wins = wins
         self.losses = losses
-# TODO: Add team stats and structure for league stats (team and player)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'league_id': self.league_id,
+            'wins': self.wins,
+            'losses': self.losses
+        }
 
 
 class League(Base):

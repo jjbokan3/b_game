@@ -11,6 +11,7 @@ import inquirer
 
 from main import *
 from play import simulate_play
+from player_team_querying import main_query, standings
 # from play import *
 
 pd.set_option('display.max_columns', None)
@@ -101,10 +102,10 @@ def onboard():
             username = input('Enter your chosen username: ')
             teamname = input('Enter your chosen team name: ')
 
-
-
             data['user_info']['username'] = username
             data['user_info']['team_name'] = teamname
+            data['user_info']['current_team'] = random.randint(1, 31)
+            data['current_week'] = 1
             data['onboard_complete'] = True
             with open('vars.json', 'w') as f:
                 json.dump(data, f)
@@ -166,14 +167,17 @@ def menu():
         case 'Simulate PLay':
             num_weeks = int(input('Enter the number of weeks to simulate: '))
             simulate_play(num_weeks, 1)
+            menu()
         case 'View Standings':
-            pass
+            standings()
+            menu()
 
         case 'View League Leaders':
             pass
 
         case 'View Player Stats':
-            pass
+            main_query()
+            menu()
 
         case 'Change Lineup':
             pass
