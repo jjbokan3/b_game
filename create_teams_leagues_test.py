@@ -7,7 +7,7 @@ from collections import defaultdict
 local_session = Session(bind=engine)
 
 # TODO: Create leagues THEN teams or vice versa?
-leagues = ['Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond']
+leagues = ["Bronze", "Silver", "Gold", "Platinum", "Diamond"]
 # divisions = ['Red', 'Blue', 'Purple']
 # Diamond (95, 100]
 # Platinum (90, 95]
@@ -16,19 +16,19 @@ leagues = ['Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond']
 # Bronze (60, 70)
 
 league_ratings = {
-    'Diamond': 92.5,
-    'Platinum': 87.5,
-    'Gold': 80.0,
-    'Silver': 70.0,
-    'Bronze': 60.0,
+    "Diamond": 92.5,
+    "Platinum": 87.5,
+    "Gold": 80.0,
+    "Silver": 70.0,
+    "Bronze": 60.0,
 }
 
-animals = pd.read_csv('Team Name Data/animals.csv', header=None)
-animals.columns = ['Animals']
-animals_list = animals['Animals'].to_list()
+animals = pd.read_csv("Team Name Data/animals.csv", header=None)
+animals.columns = ["Animals"]
+animals_list = animals["Animals"].to_list()
 
-cities = pd.read_csv('Team Name Data/uscities.csv', usecols=[0])
-cities_list = cities['city'].to_list()
+cities = pd.read_csv("Team Name Data/uscities.csv", usecols=[0])
+cities_list = cities["city"].to_list()
 
 team_name = f"{random.sample(cities_list, 1)[0]} {random.sample(animals_list, 1)[0]}"
 
@@ -40,34 +40,34 @@ randomly select 13 batters, 5 starters, and 8 relievers to each team
 all_batters = local_session.query(Batter).all()
 all_pitchers = local_session.query(Pitcher).all()
 
-infield_choices = ['1B', '2B', '3B', 'SS']
-outfield_choices = ['LF', 'CF', 'RF']
+infield_choices = ["1B", "2B", "3B", "SS"]
+outfield_choices = ["LF", "CF", "RF"]
 
-starters = ['SP', 'SP', 'SP', 'SP', 'SP']
-relievers = ['RP', 'RP', 'RP', 'RP', 'RP', 'RP', 'RP', 'RP']
+starters = ["SP", "SP", "SP", "SP", "SP"]
+relievers = ["RP", "RP", "RP", "RP", "RP", "RP", "RP", "RP"]
 
-lf = [batter for batter in all_batters if batter.position == 'LF']
-cf = [batter for batter in all_batters if batter.position == 'CF']
-rf = [batter for batter in all_batters if batter.position == 'RF']
-c = [batter for batter in all_batters if batter.position == 'C']
-b1 = [batter for batter in all_batters if batter.position == '1B']
-b2 = [batter for batter in all_batters if batter.position == '2B']
-b3 = [batter for batter in all_batters if batter.position == '3B']
-ss = [batter for batter in all_batters if batter.position == 'SS']
-sp = [pitcher for pitcher in all_pitchers if pitcher.position == 'SP']
-rp = [pitcher for pitcher in all_pitchers if pitcher.position == 'RP']
+lf = [batter for batter in all_batters if batter.position == "LF"]
+cf = [batter for batter in all_batters if batter.position == "CF"]
+rf = [batter for batter in all_batters if batter.position == "RF"]
+c = [batter for batter in all_batters if batter.position == "C"]
+b1 = [batter for batter in all_batters if batter.position == "1B"]
+b2 = [batter for batter in all_batters if batter.position == "2B"]
+b3 = [batter for batter in all_batters if batter.position == "3B"]
+ss = [batter for batter in all_batters if batter.position == "SS"]
+sp = [pitcher for pitcher in all_pitchers if pitcher.position == "SP"]
+rp = [pitcher for pitcher in all_pitchers if pitcher.position == "RP"]
 
 all_players = {
-    'C': c,
-    '1B': b1,
-    '2B': b2,
-    '3B': b3,
-    'SS': ss,
-    'LF': lf,
-    'CF': cf,
-    'RF': rf,
-    'SP': sp,
-    'RP': rp
+    "C": c,
+    "1B": b1,
+    "2B": b2,
+    "3B": b3,
+    "SS": ss,
+    "LF": lf,
+    "CF": cf,
+    "RF": rf,
+    "SP": sp,
+    "RP": rp,
 }
 
 
@@ -99,7 +99,9 @@ for x in leagues:
     x_league = local_session.query(League).filter(League.name == x).all()[0]
 
     for y in range(30):
-        team_name = f"{random.sample(cities_list, 1)[0]} {random.sample(animals_list, 1)[0]}"
+        team_name = (
+            f"{random.sample(cities_list, 1)[0]} {random.sample(animals_list, 1)[0]}"
+        )
         y_team = Team(team_name, x_league.id)
         local_session.add(y_team)
         local_session.commit()
@@ -110,14 +112,27 @@ for x in leagues:
     league_rating = league_ratings[x]
     league_teams = local_session.query(Team).filter(Team.league_id == x_league.id).all()
     for team in league_teams:
-        infield = ['C', 'C', '1B', '2B', '3B', 'SS', np.random.choice(infield_choices), np.random.choice(infield_choices)]
+        infield = [
+            "C",
+            "C",
+            "1B",
+            "2B",
+            "3B",
+            "SS",
+            np.random.choice(infield_choices),
+            np.random.choice(infield_choices),
+        ]
         for inf in infield:
             rating_inf = []
             while True:
                 rating = np.around(np.random.normal(league_rating, 1.5))
                 time1 = time.time()
                 # print(f"Time up until crap {time.time() - time0}")
-                rating_inf = [infielder for infielder in all_players[inf] if infielder.main_rating == rating]
+                rating_inf = [
+                    infielder
+                    for infielder in all_players[inf]
+                    if infielder.main_rating == rating
+                ]
                 # print(f"Why is this so long ->> {time.time() - time1}")
                 if len(rating_inf) > 0:
                     break
@@ -129,12 +144,22 @@ for x in leagues:
 
         # print(f"Infielders Created")
 
-        outfield = ['LF', 'CF', 'RF', np.random.choice(outfield_choices), np.random.choice(outfield_choices)]
+        outfield = [
+            "LF",
+            "CF",
+            "RF",
+            np.random.choice(outfield_choices),
+            np.random.choice(outfield_choices),
+        ]
         for out in outfield:
             rating_outf = []
             while True:
                 rating = np.around(np.random.normal(league_rating, 1.5))
-                rating_outf = [outfielder for outfielder in all_players[out] if outfielder.main_rating == rating]
+                rating_outf = [
+                    outfielder
+                    for outfielder in all_players[out]
+                    if outfielder.main_rating == rating
+                ]
                 if len(rating_outf) > 0:
                     break
 
@@ -149,7 +174,11 @@ for x in leagues:
             rating_start = []
             while True:
                 rating = np.around(np.random.normal(league_rating, 1.5))
-                rating_start = [starter for starter in all_players[start] if starter.main_rating == rating]
+                rating_start = [
+                    starter
+                    for starter in all_players[start]
+                    if starter.main_rating == rating
+                ]
                 if len(rating_start) > 0:
                     break
 
@@ -164,7 +193,11 @@ for x in leagues:
             rating_relieve = []
             while True:
                 rating = np.around(np.random.normal(league_rating, 1.5))
-                rating_relieve = [reliever for reliever in all_players[relieve] if reliever.main_rating == rating]
+                rating_relieve = [
+                    reliever
+                    for reliever in all_players[relieve]
+                    if reliever.main_rating == rating
+                ]
                 if len(rating_relieve) > 0:
                     break
 
@@ -206,9 +239,20 @@ teams = local_session.query(Team).all()
 
 for team in teams:
     batters = local_session.query(Batter).filter(Batter.current_team == team.id).all()
-    batter_weights = {batter.id: [batter.attributes['contact'] * .5 + batter.attributes['power'] * .5, batter.position] for batter in batters}
-    batter_weights_sorted = {k: v for k, v in sorted(batter_weights.items(), key=lambda item: item[1][0], reverse=True)}
-    manditory_positions = ['C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF']
+    batter_weights = {
+        batter.id: [
+            batter.attributes["contact"] * 0.5 + batter.attributes["power"] * 0.5,
+            batter.position,
+        ]
+        for batter in batters
+    }
+    batter_weights_sorted = {
+        k: v
+        for k, v in sorted(
+            batter_weights.items(), key=lambda item: item[1][0], reverse=True
+        )
+    }
+    manditory_positions = ["C", "1B", "2B", "3B", "SS", "LF", "CF", "RF"]
     count = 1
     dh = False
     for [batter_id, values] in batter_weights_sorted.items():
@@ -224,18 +268,24 @@ for team in teams:
             dh = True
 
 
-
-
 # Add pitching priority for starters
 for team in teams:
-    pitchers = local_session.query(Pitcher).filter(Pitcher.current_team == team.id, Pitcher.position == 'SP').all()
+    pitchers = (
+        local_session.query(Pitcher)
+        .filter(Pitcher.current_team == team.id, Pitcher.position == "SP")
+        .all()
+    )
     pitchers.sort(key=lambda x: x.main_rating, reverse=True)
     for count, pitcher in enumerate(pitchers):
         pitcher.pitcher_priority = count + 1
 
 # Add pitching priority for relievers
 for team in teams:
-    pitchers = local_session.query(Pitcher).filter(Pitcher.current_team == team.id, Pitcher.position == 'RP').all()
+    pitchers = (
+        local_session.query(Pitcher)
+        .filter(Pitcher.current_team == team.id, Pitcher.position == "RP")
+        .all()
+    )
     pitchers.sort(key=lambda x: x.main_rating, reverse=True)
     for count, pitcher in enumerate(pitchers):
         pitcher.pitcher_priority = count + 1

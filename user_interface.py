@@ -12,16 +12,15 @@ import inquirer
 from main import *
 from play import simulate_play
 from player_team_querying import main_query, standings
+
 # from play import *
 
-pd.set_option('display.max_columns', None)
-pd.set_option('expand_frame_repr', False)
+pd.set_option("display.max_columns", None)
+pd.set_option("expand_frame_repr", False)
 
-facts = open('fun_facts.txt', 'r').read().split('\n')
+facts = open("fun_facts.txt", "r").read().split("\n")
 #
 random.shuffle(facts)
-
-
 
 
 # local_session = Session(bind=engine)
@@ -63,61 +62,74 @@ random.shuffle(facts)
 
 
 def onboard():
-    tprint('Welcome to BaseballSim!')
+    tprint("Welcome to BaseballSim!")
     time.sleep(2.5)
     questions = [
-        inquirer.List('Answer',
-                      message="Choose from these options:",
-                      choices=['Create New League', 'View Description', 'Exit'],
-                      carousel=True),
+        inquirer.List(
+            "Answer",
+            message="Choose from these options:",
+            choices=["Create New League", "View Description", "Exit"],
+            carousel=True,
+        ),
     ]
     answers = inquirer.prompt(questions)
 
-    match answers['Answer']:
-        case 'Create New League':
-            print('Creating New League (This may take up to 5 minutes)\n')
+    match answers["Answer"]:
+        case "Create New League":
+            print("Creating New League (This may take up to 5 minutes)\n")
             print(f"Fun Fact:\n{random.choice(facts)}\n")
 
             from rich.console import Console
+
             tasks = {
-                'psql bgame_db -U jjbokan3 -q -c "drop schema public cascade; create schema public;" >/dev/null 2>&1': 'Resetting Database',
-                'python create_db.py': 'Creating Database',
-                'python create_players.py': 'Creating Players',
-                'python create_teams_leagues_test.py': 'Creating Teams and Leagues',
-                'python schedule_creation.py': 'Creating Team Schedules',
+                'psql bgame_db -U jjbokan3 -q -c "drop schema public cascade; create schema public;" >/dev/null 2>&1': "Resetting Database",
+                "python create_db.py": "Creating Database",
+                "python create_players.py": "Creating Players",
+                "python create_teams_leagues_test.py": "Creating Teams and Leagues",
+                "python schedule_creation.py": "Creating Team Schedules",
             }
 
             console = Console()
             for task in tasks:
-                with console.status(f"[bold green]{tasks[task]}...", spinner='aesthetic') as status:
+                with console.status(
+                    f"[bold green]{tasks[task]}...", spinner="aesthetic"
+                ) as status:
                     try:
-                        subprocess.run(task, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                        console.print(f"[bold green]{tasks[task]}[bold green] :thumbsup:")  # TODO: Find checkmark emoji
+                        subprocess.run(
+                            task,
+                            shell=True,
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL,
+                        )
+                        console.print(
+                            f"[bold green]{tasks[task]}[bold green] :thumbsup:"
+                        )  # TODO: Find checkmark emoji
                         continue
                     except subprocess.CalledProcessError:
-                        console.print(f'[bold red]{tasks[task]} :thumbsdown:')
+                        console.print(f"[bold red]{tasks[task]} :thumbsdown:")
                         sys.exit(2)
 
-            print('League created successfully!')
-            username = input('Enter your chosen username: ')
-            teamname = input('Enter your chosen team name: ')
+            print("League created successfully!")
+            username = input("Enter your chosen username: ")
+            teamname = input("Enter your chosen team name: ")
 
-            data['user_info']['username'] = username
-            data['user_info']['team_name'] = teamname
-            data['user_info']['current_team'] = random.randint(1, 31)
-            data['current_week'] = 1
-            data['onboard_complete'] = True
-            with open('vars.json', 'w') as f:
+            data["user_info"]["username"] = username
+            data["user_info"]["team_name"] = teamname
+            data["user_info"]["current_team"] = random.randint(1, 31)
+            data["current_week"] = 1
+            data["onboard_complete"] = True
+            with open("vars.json", "w") as f:
                 json.dump(data, f)
 
-            print(f"Onboarding was succesful!\nUsername: {data['user_info']['username']}\nTeam Name: {data['user_info']['team_name']}")
+            print(
+                f"Onboarding was succesful!\nUsername: {data['user_info']['username']}\nTeam Name: {data['user_info']['team_name']}"
+            )
             time.sleep(5)
 
-
-        case 'View Description':
+        case "View Description":
             pass
 
-        case 'Exit':
+        case "Exit":
             sys.exit()
 
 
@@ -126,13 +138,13 @@ def onboard():
 current_time = datetime.datetime.now().hour
 
 if 3 < current_time < 12:
-    greeting = 'Good Morning'
+    greeting = "Good Morning"
 elif 12 <= current_time < 16:
-    greeting = 'Good Afternoon'
+    greeting = "Good Afternoon"
 elif current_time >= 16 or current_time <= 3:
-    greeting = 'Good Evening'
+    greeting = "Good Evening"
 else:
-    greeting = ''
+    greeting = ""
 
 
 # with open('vars.json', 'r') as f:
@@ -143,93 +155,110 @@ else:
 # with open('vars.json', 'w') as f:
 #     json.dump(data, f)
 
-os.system('clear')
+os.system("clear")
 
 # print(f'{greeting} {data["user_info"]["username"]}! WELCOME TO THE BASEBALL GAME!\n')
 
 
-
 def menu():
 
-    subprocess.run('clear', shell=True)
-    tprint('Welcome to BaseballSim!')
-    os.system('jp2a --colors --border --height=30 baseball.jpeg')
+    subprocess.run("clear", shell=True)
+    tprint("Welcome to BaseballSim!")
+    os.system("jp2a --colors --border --height=30 baseball.jpeg")
 
     questions = [
-        inquirer.List('Answer',
-                      message="Choose from these options:",
-                      choices=['Simulate PLay', 'View Standings', 'View League Leaders', 'View Player Stats', 'Change Lineup', 'Change Starting Precedence', 'Modify Team Settings', 'Restart League', 'Exit'],
-                      carousel=True),
+        inquirer.List(
+            "Answer",
+            message="Choose from these options:",
+            choices=[
+                "Simulate PLay",
+                "View Standings",
+                "View League Leaders",
+                "View Player Stats",
+                "Change Lineup",
+                "Change Starting Precedence",
+                "Modify Team Settings",
+                "Restart League",
+                "Exit",
+            ],
+            carousel=True,
+        ),
     ]
     answers = inquirer.prompt(questions)
 
-    match answers['Answer']:
-        case 'Simulate PLay':
-            num_weeks = int(input('Enter the number of weeks to simulate: '))
+    match answers["Answer"]:
+        case "Simulate PLay":
+            num_weeks = int(input("Enter the number of weeks to simulate: "))
             simulate_play(num_weeks, 1)
             menu()
-        case 'View Standings':
+        case "View Standings":
             standings()
             menu()
 
-        case 'View League Leaders':
+        case "View League Leaders":
             pass
 
-        case 'View Player Stats':
+        case "View Player Stats":
             main_query()
             menu()
 
-        case 'Change Lineup':
+        case "Change Lineup":
             pass
 
-        case 'Change Starting Precedence':
+        case "Change Starting Precedence":
             pass
 
-        case 'Modify Team Settings':
+        case "Modify Team Settings":
             questions = [
-                inquirer.List('Answer',
-                              message="Available options to modify:",
-                              choices=['Change username', 'Change team name', 'Change team color', 'Change team logo'],
-                              ),
+                inquirer.List(
+                    "Answer",
+                    message="Available options to modify:",
+                    choices=[
+                        "Change username",
+                        "Change team name",
+                        "Change team color",
+                        "Change team logo",
+                    ],
+                ),
             ]
-            os.system('clear')
+            os.system("clear")
             answers = inquirer.prompt(questions)
 
-            match answers['Answer']:
-                case 'Change username':
-                    os.system('clear')
-                    new_username = input('Enter new username: ')
-                    data['user_info']['username'] = new_username
-                    with open('vars.json', 'w') as f:
+            match answers["Answer"]:
+                case "Change username":
+                    os.system("clear")
+                    new_username = input("Enter new username: ")
+                    data["user_info"]["username"] = new_username
+                    with open("vars.json", "w") as f:
                         json.dump(data, f)
-                    print(f'Username changed to {new_username} successfully!')
+                    print(f"Username changed to {new_username} successfully!")
                     time.sleep(3)
                     menu()
 
-                case 'Change team name':
+                case "Change team name":
                     pass
 
-                case 'Change team color':
+                case "Change team color":
                     pass
 
-                case 'Change team logo':
+                case "Change team logo":
                     pass
 
-        case 'Restart League':
-            data['onboard_complete'] = False
-            with open('vars.json', 'w') as f:
+        case "Restart League":
+            data["onboard_complete"] = False
+            with open("vars.json", "w") as f:
                 json.dump(data, f)
-            os.system('clear')
-            subprocess.run('python user_interface.py', shell=True)
+            os.system("clear")
+            subprocess.run("python user_interface.py", shell=True)
 
-        case 'Exit':
+        case "Exit":
             sys.exit()
 
 
-with open('vars.json', 'r') as f:
+with open("vars.json", "r") as f:
     data = json.load(f)
 
-if not data['onboard_complete']:
+if not data["onboard_complete"]:
     onboard()
     menu()
 else:

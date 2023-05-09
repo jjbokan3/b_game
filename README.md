@@ -12,4 +12,13 @@ yet feature-heavy realistic depiction of the game of baseball
 - Online and multiplayer mode where you create leagues with friends
 - Packs to open new cards
 - Prospect players: players that have a floor and ceiling...play them more to progress them to their true potential
-- 
+- Stories each week affecting individual players
+  - Family
+  - Experiences
+  - Relasionships with other players
+  - Trade impacts
+- Macro events affecting teams
+  - Owner changes
+  - ...
+- Stadiums for each team
+  - Differenr dimensions (pitcher vs batter friendly rather than specific dimensions)

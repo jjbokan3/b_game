@@ -2,6 +2,7 @@ from random import shuffle
 
 from sqlalchemy import desc
 from main import *
+
 local_session = Session(bind=engine)
 local_session.add(Season())
 local_session.commit()
@@ -36,12 +37,21 @@ def create_schedule(team_list, num_weeks):
     schedule = []
     for week in range(num_weeks):
         shuffle(team_list)
-        schedule.append([team_list[i::int(len(team_list)/2)] for i in range(int(len(team_list) / 2))])
+        schedule.append(
+            [
+                team_list[i :: int(len(team_list) / 2)]
+                for i in range(int(len(team_list) / 2))
+            ]
+        )
     return schedule
 
 
 for count, (league, teams) in enumerate(leagues.items()):
-    local_session.add(LeagueSeasonSchedule(league, current_season.year, create_schedule(teams, num_weeks)))
+    local_session.add(
+        LeagueSeasonSchedule(
+            league, current_season.year, create_schedule(teams, num_weeks)
+        )
+    )
 
 local_session.commit()
 
