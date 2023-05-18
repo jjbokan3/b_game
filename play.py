@@ -804,7 +804,8 @@ def simulate_play(num_weeks, league_id):
     week_schedule = (
         local_session.query(LeagueSeasonSchedule)
         .filter(LeagueSeasonSchedule.league_id == league_id)
-        .one()
+        .first()
+        # .one()
         .schedule
     )
 

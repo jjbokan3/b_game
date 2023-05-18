@@ -6,6 +6,7 @@ import names
 import collections
 import pickle
 import datetime
+from faker import Faker
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship
@@ -22,9 +23,21 @@ from sqlalchemy import (
     Sequence,
 )
 
+fake = Faker()
+from sshtunnel import SSHTunnelForwarder
 
-engine = create_engine("postgresql://jjbokan3:354820@localhost:5432/postgres")
+# tunnel = SSHTunnelForwarder(
+#     ('18.188.60.176', 22),  # EC2 instance public IP address and SSH port
+#     ssh_username="ubuntu",
+#     ssh_pkey="~/JJB3.pem",  # Path to your private key file
+#     remote_bind_address=('b-gamedb.cluster-cwm72utd4yid.us-east-2.rds.amazonaws.com', 5432),  # Aurora instance endpoint and port
+#     local_bind_address=('localhost', 5432)  # Local address and port
+# )
+# tunnel.start()
+
+# engine = create_engine("postgresql://postgres:Blue617?monitor@b-gamedb-instance-1.cwm72utd4yid.us-east-2.rds.amazonaws.com:5432/postgres")
 # engine = create_engine('postgresql://jjbokan3@localhost:5432/bgame_db')
+engine = create_engine('postgresql://postgres:354820@localhost:5432/postgres')
 Session = sessionmaker()
 Base = declarative_base()
 
@@ -156,7 +169,8 @@ def assign_hitting_attributes(main_rating: int) -> dict:
     Args:
         main_rating: Current main rating of player
 
-    Returns: dictionary of attributes
+    Returns:
+        dictionary of attributes
 
     """
     temp_dict = BATTING_ATTRIBUTES.copy()
@@ -225,7 +239,8 @@ def create_player_df() -> pd.DataFrame:
         axis=1,
     )
     df_main["name"] = df_main.apply(
-        lambda row: names.get_full_name(gender="male"), axis=1
+        lambda row: fake.name_male(), axis=1
+        # lambda row: names.get_full_name(gender="male"), axis=1
     )
     df_main.reset_index(inplace=True)
     df_main.rename(columns={"index": "id"}, inplace=True)

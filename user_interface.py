@@ -80,9 +80,10 @@ def onboard():
             print(f"Fun Fact:\n{random.choice(facts)}\n")
 
             from rich.console import Console
-
+            database = 'postgres'
+            user = 'postgres'
             tasks = {
-                'psql bgame_db -U jjbokan3 -q -c "drop schema public cascade; create schema public;" >/dev/null 2>&1': "Resetting Database",
+                f'psql {database} -U {user} -q -c "drop schema public cascade; create schema public;" >/dev/null 2>&1': "Resetting Database",
                 "python create_db.py": "Creating Database",
                 "python create_players.py": "Creating Players",
                 "python create_teams_leagues_test.py": "Creating Teams and Leagues",
