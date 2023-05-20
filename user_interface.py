@@ -7,6 +7,8 @@ import subprocess
 from art import *
 from collections import defaultdict
 
+import psycopg2
+from psycopg2 import sql
 import inquirer
 
 from main import *
@@ -22,6 +24,12 @@ facts = open("fun_facts.txt", "r").read().split("\n")
 #
 random.shuffle(facts)
 
+db_params = {
+    'host': 'db',
+    'dbname': 'postgres',
+    'user': 'postgres',
+    'password': '354820'
+}
 
 # local_session = Session(bind=engine)
 
@@ -83,12 +91,37 @@ def onboard():
             database = 'postgres'
             user = 'postgres'
             tasks = {
-                f'psql {database} -U {user} -q -c "drop schema public cascade; create schema public;" >/dev/null 2>&1': "Resetting Database",
                 "python create_db.py": "Creating Database",
                 "python create_players.py": "Creating Players",
                 "python create_teams_leagues_test.py": "Creating Teams and Leagues",
                 "python schedule_creation.py": "Creating Team Schedules",
             }
+
+            # Connect to the PostgreSQL server
+            conn = psycopg2.connect(**db_params)
+            print(1)
+
+            # Create a new cursor
+            cur = conn.cursor()
+
+            print(2)
+            # Execute an SQL command
+            try:
+                cur.execute(sql.SQL("drop schema public cascade; create schema public;"))
+
+                print(3)
+            # Commit the transaction
+                conn.commit()
+
+                print(4)
+
+            except psycopg2.DatabaseError as e:
+                print(e.pgcode)
+            # Close the cursor and the connection
+            cur.close()
+            conn.close()
+
+            print(5)
 
             console = Console()
             for task in tasks:
