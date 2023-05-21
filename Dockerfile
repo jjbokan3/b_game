@@ -1,5 +1,5 @@
 # Use an official Python runtime as a parent image
-FROM python:latest
+FROM python:slim-bullseye
 
 # Set the working directory in the container to /app
 WORKDIR /app
