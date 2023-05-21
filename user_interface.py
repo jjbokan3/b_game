@@ -109,21 +109,17 @@ def onboard(data):
 
             # Connect to the PostgreSQL server
             conn = psycopg2.connect(**db_params)
-            print(1)
 
             # Create a new cursor
             cur = conn.cursor()
 
-            print(2)
             # Execute an SQL command
             try:
                 cur.execute(sql.SQL("drop schema public cascade; create schema public;"))
 
-                print(3)
             # Commit the transaction
                 conn.commit()
 
-                print(4)
 
             except psycopg2.DatabaseError as e:
                 print(e.pgcode)
@@ -131,7 +127,6 @@ def onboard(data):
             cur.close()
             conn.close()
 
-            print(5)
 
             console = Console()
             for task in tasks:
@@ -260,6 +255,6 @@ def menu(data):
 
 
 
-if __name__ == "__user_interface__":
+if __name__ == "__main__":
     main()
 
