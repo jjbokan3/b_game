@@ -24,7 +24,7 @@ from sqlalchemy import (
 )
 
 fake = Faker()
-from sshtunnel import SSHTunnelForwarder
+# from sshtunnel import SSHTunnelForwarder
 
 # tunnel = SSHTunnelForwarder(
 #     ('18.188.60.176', 22),  # EC2 instance public IP address and SSH port
@@ -37,7 +37,8 @@ from sshtunnel import SSHTunnelForwarder
 
 # engine = create_engine("postgresql://postgres:Blue617?monitor@b-gamedb-instance-1.cwm72utd4yid.us-east-2.rds.amazonaws.com:5432/postgres")
 # engine = create_engine('postgresql://jjbokan3@localhost:5432/bgame_db')
-engine = create_engine('postgresql://postgres:354820@localhost:5432/postgres')
+# engine = create_engine('postgresql://postgres:354820@localhost:5432/postgres')
+engine = create_engine('postgresql://postgres:354820@db:5432/postgres')
 Session = sessionmaker()
 Base = declarative_base()
 

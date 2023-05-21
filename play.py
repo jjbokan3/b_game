@@ -1,4 +1,5 @@
 # from typing import List
+import time
 
 # from Projects.b_game.main import PitcherGameStats, BatterGameStats
 from main import *
@@ -794,6 +795,7 @@ def simulate_play(num_weeks, league_id):
 
     if data["current_week"] >= 162:
         print("Season is over")
+        time.sleep(5)
         return
     elif data["current_week"] + num_weeks > 162:
         stop_week = 162

@@ -7,6 +7,8 @@ import subprocess
 from art import *
 from collections import defaultdict
 
+import psycopg2
+from psycopg2 import sql
 import inquirer
 
 from main import *
@@ -22,6 +24,12 @@ facts = open("fun_facts.txt", "r").read().split("\n")
 #
 random.shuffle(facts)
 
+db_params = {
+    'host': 'db',
+    'dbname': 'postgres',
+    'user': 'postgres',
+    'password': '354820'
+}
 
 # local_session = Session(bind=engine)
 
@@ -58,10 +66,20 @@ random.shuffle(facts)
 #
 # print(local_session.query(BatterGameStats).filter(BatterGameStats.batter_id == 5455).all())
 
+def main():
+    with open("vars.json", "r") as f:
+        data = json.load(f)
+
+    if not data["onboard_complete"]:
+        onboard(data)
+        menu(data)
+    else:
+        menu(data)
+
 # -------- Onboard --------
 
 
-def onboard():
+def onboard(data):
     tprint("Welcome to BaseballSim!")
     time.sleep(2.5)
     questions = [
@@ -83,12 +101,32 @@ def onboard():
             database = 'postgres'
             user = 'postgres'
             tasks = {
-                f'psql {database} -U {user} -q -c "drop schema public cascade; create schema public;" >/dev/null 2>&1': "Resetting Database",
                 "python create_db.py": "Creating Database",
                 "python create_players.py": "Creating Players",
                 "python create_teams_leagues_test.py": "Creating Teams and Leagues",
                 "python schedule_creation.py": "Creating Team Schedules",
             }
+
+            # Connect to the PostgreSQL server
+            conn = psycopg2.connect(**db_params)
+
+            # Create a new cursor
+            cur = conn.cursor()
+
+            # Execute an SQL command
+            try:
+                cur.execute(sql.SQL("drop schema public cascade; create schema public;"))
+
+            # Commit the transaction
+                conn.commit()
+
+
+            except psycopg2.DatabaseError as e:
+                print(e.pgcode)
+            # Close the cursor and the connection
+            cur.close()
+            conn.close()
+
 
             console = Console()
             for task in tasks:
@@ -161,106 +199,62 @@ os.system("clear")
 # print(f'{greeting} {data["user_info"]["username"]}! WELCOME TO THE BASEBALL GAME!\n')
 
 
-def menu():
+def menu(data):
+    while True:
+        subprocess.run("clear", shell=True)
+        tprint("Welcome to BaseballSim!")
+        os.system("jp2a --colors --border --height=30 baseball.jpeg")
 
-    subprocess.run("clear", shell=True)
-    tprint("Welcome to BaseballSim!")
-    os.system("jp2a --colors --border --height=30 baseball.jpeg")
+        questions = [
+            inquirer.List(
+                "Answer",
+                message="Choose from these options:",
+                choices=[
+                    "Simulate PLay",
+                    "View Standings",
+                    "View League Leaders",
+                    "View Player Stats",
+                    "Change Lineup",
+                    "Change Starting Precedence",
+                    "Modify Team Settings",
+                    "Restart League",
+                    "Exit",
+                ],
+                carousel=True,
+            ),
+        ]
+        answers = inquirer.prompt(questions)
 
-    questions = [
-        inquirer.List(
-            "Answer",
-            message="Choose from these options:",
-            choices=[
-                "Simulate PLay",
-                "View Standings",
-                "View League Leaders",
-                "View Player Stats",
-                "Change Lineup",
-                "Change Starting Precedence",
-                "Modify Team Settings",
-                "Restart League",
-                "Exit",
-            ],
-            carousel=True,
-        ),
-    ]
-    answers = inquirer.prompt(questions)
-
-    match answers["Answer"]:
-        case "Simulate PLay":
-            num_weeks = int(input("Enter the number of weeks to simulate: "))
-            simulate_play(num_weeks, 1)
-            menu()
-        case "View Standings":
-            standings()
-            menu()
-
-        case "View League Leaders":
-            pass
-
-        case "View Player Stats":
-            main_query()
-            menu()
-
-        case "Change Lineup":
-            pass
-
-        case "Change Starting Precedence":
-            pass
-
-        case "Modify Team Settings":
-            questions = [
-                inquirer.List(
-                    "Answer",
-                    message="Available options to modify:",
-                    choices=[
-                        "Change username",
-                        "Change team name",
-                        "Change team color",
-                        "Change team logo",
-                    ],
-                ),
-            ]
-            os.system("clear")
-            answers = inquirer.prompt(questions)
-
-            match answers["Answer"]:
-                case "Change username":
-                    os.system("clear")
-                    new_username = input("Enter new username: ")
-                    data["user_info"]["username"] = new_username
-                    with open("vars.json", "w") as f:
-                        json.dump(data, f)
-                    print(f"Username changed to {new_username} successfully!")
-                    time.sleep(3)
-                    menu()
-
-                case "Change team name":
-                    pass
-
-                case "Change team color":
-                    pass
-
-                case "Change team logo":
-                    pass
-
-        case "Restart League":
-            data["onboard_complete"] = False
-            with open("vars.json", "w") as f:
-                json.dump(data, f)
-            os.system("clear")
-            subprocess.run("python user_interface.py", shell=True)
-
-        case "Exit":
-            sys.exit()
+        match answers["Answer"]:
+            case "Simulate PLay":
+                num_weeks = int(input("Enter the number of weeks to simulate: "))
+                simulate_play(num_weeks, 1)
+            case "View Standings":
+                standings()
+            case "View League Leaders":
+                pass
+            case "View Player Stats":
+                main_query()
+            case "Change Lineup":
+                pass
+            case "Change Starting Precedence":
+                pass
+            case "Modify Team Settings":
+                # ... Your code here ...
+                pass
+            case "Restart League":
+                data["onboard_complete"] = False
+                with open("vars.json", "w") as f:
+                    json.dump(data, f)
+                os.system("clear")
+                onboard(data)
+                # continue back to the start of the loop
+                continue
+            case "Exit":
+                return
 
 
-with open("vars.json", "r") as f:
-    data = json.load(f)
 
-if not data["onboard_complete"]:
-    onboard()
-    menu()
-else:
-    menu()
+if __name__ == "__main__":
+    main()
+

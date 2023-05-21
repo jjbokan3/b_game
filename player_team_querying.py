@@ -8,7 +8,19 @@ import json
 import os
 from collections import defaultdict
 
-local_session = Session(bind=engine)
+# local_session = Session(bind=engine)
+
+from contextlib import contextmanager
+
+@contextmanager
+def session_scope():
+    """Provide a transactional scope around a series of operations."""
+    local_session = Session(bind=engine)
+    try:
+        yield local_session
+    finally:
+        local_session.rollback()
+        local_session.close()
 
 
 def main_query():
@@ -27,25 +39,26 @@ def main_query():
 
     match answers["Answer"]:
         case "My team":
-            bgs1 = (
-                local_session.query(BatterGameStats)
-                .filter(
-                    BatterGameStats.batter.has(
-                        current_team=data["user_info"]["current_team"]
+            with session_scope() as local_session:
+                bgs1 = (
+                    local_session.query(BatterGameStats)
+                    .filter(
+                        BatterGameStats.batter.has(
+                            current_team=data["user_info"]["current_team"]
+                        )
                     )
+                    .all()
                 )
-                .all()
-            )
 
-            groups = defaultdict(list)
-            for obj in bgs1:
-                groups[obj.batter_id].append(obj)
+                groups = defaultdict(list)
+                for obj in bgs1:
+                    groups[obj.batter_id].append(obj)
 
-            df1 = pd.DataFrame([sum(list1).to_dict() for list1 in groups.values()])
-            df1.sort_values("ops", ascending=False, inplace=True)
-            pd.options.display.float_format = '{:.3f}'.format
-            print(df1.head(20))
-            input("Press Enter to continue...")
+                df1 = pd.DataFrame([sum(list1).to_dict() for list1 in groups.values()])
+                df1.sort_values("ops", ascending=False, inplace=True)
+                pd.options.display.float_format = '{:.3f}'.format
+                print(df1.head(20))
+                input("Press Enter to continue...")
 
         case "Another team":
             pass
@@ -54,9 +67,12 @@ def main_query():
 
 
 def standings():
-    teams = local_session.query(Team).filter(Team.league_id == 1).all()
+    with session_scope() as local_session:
+        teams = local_session.query(Team).filter(Team.league_id == 1).all()
 
-    df1 = pd.DataFrame([team.to_dict() for team in teams])
-    df1.sort_values("wins", ascending=False, inplace=True)
-    print(df1.head(30))
+        df1 = pd.DataFrame([team.to_dict() for team in teams])
+        df1.sort_values("wins", ascending=False, inplace=True)
+        print(df1.head(30))
+
+
     input("Press Enter to continue...")

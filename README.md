@@ -21,4 +21,11 @@ yet feature-heavy realistic depiction of the game of baseball
   - Owner changes
   - ...
 - Stadiums for each team
-  - Differenr dimensions (pitcher vs batter friendly rather than specific dimensions)
+  - Different dimensions (pitcher vs batter friendly rather than specific dimensions)
+- Terminal
+  - Colored players to represent card value
+- More info about each player
+  - Faker library
+    - Better names
+    - Hometowns
+  - College
