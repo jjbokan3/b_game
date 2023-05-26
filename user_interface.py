@@ -10,6 +10,8 @@ from collections import defaultdict
 import psycopg2
 from psycopg2 import sql
 import inquirer
+from rich.console import Console
+from rich.markdown import Markdown
 
 from main import *
 from play import simulate_play
@@ -97,7 +99,7 @@ def onboard(data):
             print("Creating New League (This may take up to 5 minutes)\n")
             print(f"Fun Fact:\n{random.choice(facts)}\n")
 
-            from rich.console import Console
+
             database = 'postgres'
             user = 'postgres'
             tasks = {
@@ -161,12 +163,17 @@ def onboard(data):
                 json.dump(data, f)
 
             print(
-                f"Onboarding was succesful!\nUsername: {data['user_info']['username']}\nTeam Name: {data['user_info']['team_name']}"
+                f"Onboarding was successful!\nUsername: {data['user_info']['username']}\nTeam Name: {data['user_info']['team_name']}"
             )
             time.sleep(5)
 
         case "View Description":
-            pass
+            console = Console()
+            with open('README.md', 'r') as f:
+                md_text = f.read()
+            md = Markdown(md_text)
+            console.print(md)
+            input("Press Enter to continue...")
 
         case "Exit":
             sys.exit()
@@ -230,7 +237,7 @@ def menu(data):
                 num_weeks = int(input("Enter the number of weeks to simulate: "))
                 simulate_play(num_weeks, 1)
             case "View Standings":
-                standings()
+                standings(data)
             case "View League Leaders":
                 pass
             case "View Player Stats":
